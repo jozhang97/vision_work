@@ -17,15 +17,23 @@ dropout_keep_prob = 0.5
 ''' DEFINE VARIABLES '''
 x = tf.placeholder(tf.float32, [None, 3072])
 x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
-filter_shape = [5,5,3,5]
+
+W_4 = tf.Variable(tf.truncated_normal([5,5,3,32], stddev=0.1))
+b_4 = tf.Variable(tf.truncated_normal([32], stddev = 0.1))
+conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
+relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
+pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
+
+filter_shape = [5,5,32,64]
 W_3 = tf.Variable(tf.truncated_normal(filter_shape, stddev = 0.1))
-b_3 = tf.Variable(tf.constant(0.1, shape=[5]))
-conv_3 = tf.nn.conv2d(x_reshaped, W_3, strides=[1,1,1,1], padding="SAME")
+b_3 = tf.Variable(tf.constant(0.1, shape=[64]))
+conv_3 = tf.nn.conv2d(pooled_4, W_3, strides=[1,1,1,1], padding="VALID")
 relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
-pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,2,2,1], padding="SAME")
-y_3 = tf.reshape(pooled_3, [-1, 28*28*5]) 
+pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
+y_3 = tf.reshape(pooled_3, [-1, 20*20*64]) 
 x_2 = y_3
-W_2 = tf.Variable(tf.random_uniform([3920, 1024], 0, 1, dtype=tf.float32, seed=0))
+W_22 = tf.Variable(tf.random_uniform(
+W_2 = tf.Variable(tf.random_uniform([25600, 1024], 0, 1, dtype=tf.float32, seed=0))
 b_2 = tf.Variable(tf.random_uniform([1024], 0, 1, dtype=tf.float32, seed=0))
 y_2 = tf.nn.relu(tf.matmul(x_2, W_2) + b_2)
 x_1 = y_2
