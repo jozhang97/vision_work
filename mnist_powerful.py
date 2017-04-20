@@ -15,12 +15,27 @@ epsilon = tf.Variable(0.000000000000001 * np.ones([n_classes]), dtype=tf.float32
 dropout_keep_prob = 0.75
 
 ''' HELPER FUNCTION '''
+def variable_summaries(var):
+  """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+  with tf.name_scope('summaries'):
+    mean = tf.reduce_mean(var)
+    tf.summary.scalar('mean', mean)
+    with tf.name_scope('stddev'):
+      stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+    tf.summary.scalar('stddev', stddev)
+    tf.summary.scalar('max', tf.reduce_max(var))
+    tf.summary.scalar('min', tf.reduce_min(var))
+    tf.summary.histogram('histogram', var)
+
+
 ''' DEFINE VARIABLES '''
 x = tf.placeholder(tf.float32, [None, 784])
 x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
 
 W_4 = tf.Variable(tf.random_uniform([5,5,1,64], 0, 100))
+variable_summaries(W_4)
 b_4 = tf.Variable(tf.random_uniform([64], 0, 100))
+variable_summaries(b_4)
 conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
 relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
 pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
@@ -61,6 +76,7 @@ g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
 ''' DEFINE LOSS FUNCTION '''
 # try use this loss function tf.nn.log_poisson_loss
 cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
+tf.summary.scalar('cross_entropy', cross_entropy_2)
 regularization = tf.nn.l2_loss(W_1) + tf.nn.l2_loss(b_1) + tf.nn.l2_loss(W_2) + tf.nn.l2_loss(b_2) + tf.nn.l2_loss(W_22) + tf.nn.l2_loss(b_22) + tf.nn.l2_loss(W_4) + tf.nn.l2_loss(b_4)
 loss = cross_entropy_2 + regularization * reg_coeff
 
@@ -70,6 +86,7 @@ train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TODO: IS THIS THE RIGHT TESTING
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+tf.summary.scalar('accuracy', accuracy)
 #train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
 ''' TRAIN '''
 
