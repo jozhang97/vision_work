@@ -15,7 +15,6 @@ epsilon = tf.Variable(0.000000000000001 * np.ones([n_classes]), dtype=tf.float32
 dropout_keep_prob = 0.75
 
 ''' HELPER FUNCTION '''
-
 ''' DEFINE VARIABLES '''
 x = tf.placeholder(tf.float32, [None, 784])
 x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
@@ -52,6 +51,13 @@ y_1 = tf.nn.dropout(y_1_eval, dropout_keep_prob)
 y_true = tf.placeholder(tf.float32, [None, n_classes])
 
 f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test.images, y_true: cifar.test.labels})
+g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
+
+
+
+
+
+
 ''' DEFINE LOSS FUNCTION '''
 # try use this loss function tf.nn.log_poisson_loss
 cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
@@ -76,6 +82,10 @@ for i in range(num_iter):
         print(f(loss))
         print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
         print(sess.run(accuracy, feed_dict={x: cifar.test.images[:100], y_true: cifar.test.labels[:100]}))
+        tf.summary.scalar('num_iter', i)
+        tf.summary.scalar('validation_loss', f(loss)) 
+        tf.summary.scalar('training_loss', g(var, x_s, y_s)) 
+        tf.summary.histogram('histogram', var)
     if i%1000 == 0:
         learning_rate *= 0.5
 

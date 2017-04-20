@@ -57,7 +57,7 @@ f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test_images, y_true: cifar
 # try use this loss function tf.nn.log_poisson_loss
 cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
 regularization = tf.nn.l2_loss(W_1) + tf.nn.l2_loss(b_1) + tf.nn.l2_loss(W_2) + tf.nn.l2_loss(b_2) + tf.nn.l2_loss(W_22) + tf.nn.l2_loss(b_22) + tf.nn.l2_loss(W_3) + tf.nn.l2_loss(b_3) + tf.nn.l2_loss(W_4) + tf.nn.l2_loss(b_4)
-loss = cross_entropy_2 + reg_coeff * regularization 
+loss = cross_entropy_2 
 
 
 ''' DEFINE OPTIMIZATION TECHNIQUE '''
