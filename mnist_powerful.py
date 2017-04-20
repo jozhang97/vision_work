@@ -8,7 +8,7 @@ n_classes = 10
 learning_rate = 0.1
 learning_rate_decay = 0.1
 num_epochs_per_decay = 350
-num_iter = 10000
+num_iter = 100
 batch_size = 100 
 reg_coeff = 0.0005
 epsilon = tf.Variable(0.000000000000001 * np.ones([n_classes]), dtype=tf.float32)
@@ -72,22 +72,34 @@ correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TOD
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 #train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
 ''' TRAIN '''
-init = tf.global_variables_initializer()
+
 sess = tf.Session()
+
+tf.summary.scalar('training_loss', loss)
+tf.summary.histogram('histogram', loss)
+merged = tf.summary.merge_all()
+
+init = tf.global_variables_initializer()
+train_writer = tf.summary.FileWriter('tensorboard_log/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log/test')
 sess.run(init)
 for i in range(num_iter):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
-    sess.run(train_step, feed_dict={x: batch_xs, y_true:batch_ys})
-    if i%100== 0:
-        print(f(loss))
-        print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
-        print(sess.run(accuracy, feed_dict={x: cifar.test.images[:100], y_true: cifar.test.labels[:100]}))
-        tf.summary.scalar('num_iter', i)
-        tf.summary.scalar('validation_loss', f(loss)) 
-        tf.summary.scalar('training_loss', g(var, x_s, y_s)) 
-        tf.summary.histogram('histogram', var)
+    if i % 10 == 0:
+        summary,loss = sess.run([merged, loss], feed_dict={x:cifar.test.images, y_true: cifar.test.labels})
+        test_writer.add_summary(summary, i)
+    else:
+        summary,_ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys})
+        train_writer.add_summary(summary, i)
+    #if i%100== 0:
+        #print(f(loss))
+        #print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
+        #print(sess.run(accuracy, feed_dict={x: cifar.test.images[:100], y_true: cifar.test.labels[:100]}))
     if i%1000 == 0:
         learning_rate *= 0.5
+
+
+
 
 ''' TEST '''
 correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TODO: IS THIS THE RIGHT TESTING
