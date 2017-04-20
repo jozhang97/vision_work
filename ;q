@@ -26,7 +26,6 @@ class Cifar:
         s3 = unpickle(folder+"data_batch_3")
         s4 = unpickle(folder+"data_batch_4")
         s5 = unpickle(folder+"data_batch_5")
-        self.s5 = s5
         start = time.time()
         s1 = zip(s1['data'], s1['labels'])
         s2 = zip(s2['data'], s2['labels'])
