@@ -40,7 +40,7 @@ conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
 relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
 pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_4 = tf.nn.local_response_normalization(pooled_4)
-W_3 = tf.Variable(tf.truncated_normal([5,5,64,64]), mean=0, stddev=1.0))
+W_3 = tf.Variable(tf.truncated_normal([5,5,64,64], mean=0, stddev=1.0))
 variable_summaries("W_3", W_3)
 b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
 variable_summaries("b_3", b_3)
@@ -102,6 +102,6 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys})
         train_writer.add_summary(summary, i)
-    if i % 10000 == 0:
+    if i % 10000 == 0 and i > 0:
         print("LEARNING RATE DECAYED")
         learning_rate *= learning_rate_decay

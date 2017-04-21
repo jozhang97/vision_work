@@ -7,7 +7,7 @@ cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
 n_classes = 10
 learning_rate = 0.1
 tf.summary.scalar('learning_rate', learning_rate)
-learning_rate_decay = 0.1
+learning_rate_decay = 0.1 
 decays_per_epoch= 1/10
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000 
 
@@ -43,7 +43,7 @@ relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
 pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_4 = tf.nn.local_response_normalization(pooled_4)
 filter_shape = [5,5,64,64]
-W_3 = tf.Variable(tf.truncated_normal(filter_shape), mean=0, stddev=1.0))
+W_3 = tf.Variable(tf.truncated_normal(filter_shape, mean=0, stddev=1.0))
 variable_summaries(W_3)
 b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
 variable_summaries(b_3)
@@ -52,7 +52,7 @@ conv_3 = tf.nn.local_response_normalization(conv_3)
 relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
 pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_3 = tf.reshape(pooled_3, [-1, 16*16*64])
-x_22 = tf.reshape(y_4, [-1, 16*16*64])
+x_22 = tf.reshape(y_3, [-1, 16*16*64])
 W_22 = tf.Variable(tf.truncated_normal([16*16*64,512], mean=0, stddev=1.0))
 variable_summaries(W_22)
 b_22 = tf.Variable(tf.truncated_normal([512], mean=0, stddev=1.0))
@@ -112,6 +112,6 @@ for i in range(60000* 10):
         #print(f(loss))
         #print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
         #print(sess.run(accuracy, feed_dict={x: cifar.test.images[:100], y_true: cifar.test.labels[:100]}))
-    if i % 6000 == 0:
+    if i % 6000 == 0 and i > 0:
     #if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
         learning_rate *= learning_rate_decay 
