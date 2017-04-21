@@ -109,7 +109,7 @@ init = tf.global_variables_initializer()
 train_writer = tf.summary.FileWriter('tensorboard_log5/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log5/test')
 sess.run(init)
-for i in range(NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * 10):
+for i in range(60000* 10):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
     if i % 10 == 0:
         summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels})
@@ -122,7 +122,7 @@ for i in range(NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * 10):
         #print(f(loss))
         #print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
         #print(sess.run(accuracy, feed_dict={x: cifar.test.images[:100], y_true: cifar.test.labels[:100]}))
-    if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
+    if i % 6000 == 0:
         learning_rate *= learning_rate_decay 
 
 
