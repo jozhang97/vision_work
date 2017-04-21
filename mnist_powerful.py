@@ -98,8 +98,6 @@ tf.summary.scalar('training_loss', loss)
 tf.summary.histogram('Training_loss', loss) 
 tf.summary.histogram('Accuracy', accuracy)
 
-
-
 merged = tf.summary.merge_all()
 
 init = tf.global_variables_initializer()
@@ -120,6 +118,7 @@ for i in range(60000* 10):
         #print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
         #print(sess.run(accuracy, feed_dict={x: cifar.test.images[:100], y_true: cifar.test.labels[:100]}))
     if i % 6000 == 0:
+    #if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
         learning_rate *= learning_rate_decay 
 
 
