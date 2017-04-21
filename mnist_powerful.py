@@ -33,7 +33,7 @@ def variable_summaries(var):
 x = tf.placeholder(tf.float32, [None, 784])
 x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
 
-W_4 = tf.Variable(tf.random_uniform([5,5,1,64], 0, 100))
+W_4 = tf.Variable(tf.truncated_normal([5,5,1,64], mean=1.0, std=1.0))
 variable_summaries(W_4)
 b_4 = tf.Variable(tf.random_uniform([64], 0, 100))
 variable_summaries(b_4)
