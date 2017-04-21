@@ -11,9 +11,9 @@ decays_per_epoch= 1/10
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000 
 
 batch_size = 100 
-reg_coeff = 0.0005
+reg_coeff = 0.00005
 epsilon = tf.Variable(0.000000000000001 * np.ones([n_classes]), dtype=tf.float32)
-dropout_keep_prob = 0.75
+dropout_keep_prob = 0.5
 
 ''' HELPER FUNCTION '''
 def variable_summaries(var):
@@ -41,6 +41,7 @@ conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
 relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
 pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_4 = tf.nn.local_response_normalization(pooled_4)
+'''
 filter_shape = [5,5,64,64]
 W_3 = tf.Variable(tf.random_uniform(filter_shape))
 variable_summaries(W_3)
@@ -51,8 +52,9 @@ conv_3 = tf.nn.local_response_normalization(conv_3)
 relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
 pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_3 = tf.reshape(pooled_3, [-1, 16*16*64])
-x_22 = tf.reshape(y_4, [-1, 16*16*64])
-W_22 = tf.Variable(tf.random_uniform([16*16*64,512], 0, 100, dtype=tf.float32, seed=0))
+'''
+x_22 = tf.reshape(y_4, [-1, 22*22*64])
+W_22 = tf.Variable(tf.random_uniform([22*22*64,512], 0, 100, dtype=tf.float32, seed=0))
 variable_summaries(W_22)
 b_22 = tf.Variable(tf.random_uniform([512], 0, 1, dtype=tf.float32, seed=0))
 variable_summaries(b_22)
@@ -75,17 +77,12 @@ y_true = tf.placeholder(tf.float32, [None, n_classes])
 f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test.images, y_true: cifar.test.labels})
 g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
 
-
-
-
-
-
 ''' DEFINE LOSS FUNCTION '''
 # try use this loss function tf.nn.log_poisson_loss
 cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
 tf.summary.scalar('cross_entropy', cross_entropy_2)
 regularization = tf.nn.l2_loss(W_1) + tf.nn.l2_loss(b_1) + tf.nn.l2_loss(W_2) + tf.nn.l2_loss(b_2) + tf.nn.l2_loss(W_22) + tf.nn.l2_loss(b_22) + tf.nn.l2_loss(W_4) + tf.nn.l2_loss(b_4)
-loss = cross_entropy_2 
+loss = cross_entropy_2 + reg_coeff * regularization
 
 
 ''' DEFINE OPTIMIZATION TECHNIQUE '''
@@ -109,8 +106,8 @@ tf.summary.histogram('Accuracy', accuracy)
 merged = tf.summary.merge_all()
 
 init = tf.global_variables_initializer()
-train_writer = tf.summary.FileWriter('tensorboard_log2/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log2/test')
+train_writer = tf.summary.FileWriter('tensorboard_log5/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log5/test')
 sess.run(init)
 for i in range(NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * 10):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
