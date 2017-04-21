@@ -41,7 +41,6 @@ conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
 relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
 pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_4 = tf.nn.local_response_normalization(pooled_4)
-'''
 filter_shape = [5,5,64,64]
 W_3 = tf.Variable(tf.random_uniform(filter_shape))
 variable_summaries(W_3)
@@ -52,9 +51,8 @@ conv_3 = tf.nn.local_response_normalization(conv_3)
 relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
 pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_3 = tf.reshape(pooled_3, [-1, 16*16*64])
-'''
-x_22 = tf.reshape(y_4, [-1, 22*22*64])
-W_22 = tf.Variable(tf.random_uniform([22*22*64,512], 0, 100, dtype=tf.float32, seed=0))
+x_22 = tf.reshape(y_4, [-1, 16*16*64])
+W_22 = tf.Variable(tf.random_uniform([16*16*64,512], 0, 100, dtype=tf.float32, seed=0))
 variable_summaries(W_22)
 b_22 = tf.Variable(tf.random_uniform([512], 0, 1, dtype=tf.float32, seed=0))
 variable_summaries(b_22)
@@ -99,7 +97,6 @@ sess = tf.Session()
 tf.summary.scalar('training_loss', loss)
 tf.summary.histogram('Training_loss', loss) 
 tf.summary.histogram('Accuracy', accuracy)
-
 
 
 
