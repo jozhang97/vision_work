@@ -6,6 +6,7 @@ cifar = Cifar()
 ''' HYPERPARAMETERS '''
 n_classes = 10
 learning_rate = 0.1
+tf.summary.scalar("learning_rate", learning_rate)
 learning_rate_decay = 0.1
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
 DELAYS_PER_EPOCH = 1
@@ -32,7 +33,6 @@ def variable_summaries(name, var):
 ''' DEFINE VARIABLES '''
 x = tf.placeholder(tf.float32, [None, 3072])
 x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
-
 W_4 = tf.Variable(tf.truncated_normal([5,5,3,64], mean=0, stddev=1.0))
 variable_summaries("W_4", W_4)
 b_4 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
@@ -40,9 +40,7 @@ conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
 relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
 pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_4 = tf.nn.local_response_normalization(pooled_4)
-
-filter_shape = [5,5,64,64]
-W_3 = tf.Variable(tf.truncated_normal(filter_shape), mean=0, stddev=1.0))
+W_3 = tf.Variable(tf.truncated_normal([5,5,64,64]), mean=0, stddev=1.0))
 variable_summaries("W_3", W_3)
 b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
 variable_summaries("b_3", b_3)
@@ -51,7 +49,6 @@ conv_3 = tf.nn.local_response_normalization(conv_3)
 relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
 pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
 y_3 = tf.reshape(pooled_3, [-1, 20*20*64])
-
 x_22 = y_3
 W_22 = tf.Variable(tf.truncated_normal([20*20*64,512], mean=0, stddev=1.0))
 variable_summaries("W_22", W_22)
@@ -69,29 +66,26 @@ W_1 = tf.Variable(tf.truncated_normal([256, n_classes], mean=0, stddev=1.0))
 variable_summaries("W_1", W_1)
 b_1 = tf.Variable(tf.truncated_normal([n_classes], mean=0, stddev=1.0))
 variable_summaries("b_1", b_1)
-#y_1_eval = tf.nn.bias_add(tf.matmul(x_1, W_1) , b_1)
-y_1_eval = tf.matmul(x_1, W_1)
+y_1_eval = tf.nn.bias_add(tf.matmul(x_1, W_1) , b_1)
 y_1 = tf.nn.dropout(y_1_eval, dropout_keep_prob)
 y_true = tf.placeholder(tf.float32, [None, n_classes])
 
 f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
+
 ''' DEFINE LOSS FUNCTION '''
-# try use this loss function tf.nn.log_poisson_loss
 cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
-regularization = tf.nn.l2_loss(W_1) + tf.nn.l2_loss(b_1) + tf.nn.l2_loss(W_2) + tf.nn.l2_loss(b_2) + tf.nn.l2_loss(W_22) + tf.nn.l2_loss(b_22) + tf.nn.l2_loss(W_3) + tf.nn.l2_loss(b_3) + tf.nn.l2_loss(W_4) + tf.nn.l2_loss(b_4)
-loss = cross_entropy_2 
 tf.summary.scalar("cross_entropy", cross_entropy_2)
+loss = cross_entropy_2 
 tf.summary.scalar("loss", loss)
 
 
 ''' DEFINE OPTIMIZATION TECHNIQUE '''
 train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-
-correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TODO: IS THIS THE RIGHT TESTING
+correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar("accuracy", accuracy)
-tf.summary.scalar("learning_rate", learning_rate)
-#train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+
+
 ''' TRAIN '''
 merged = tf.summary.merge_all()
 init = tf.global_variables_initializer()
@@ -108,28 +102,6 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys})
         train_writer.add_summary(summary, i)
-    #if i % NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * DELAYS_PER_EPOCH == 0:
     if i % 10000 == 0:
+        print("LEARNING RATE DECAYED")
         learning_rate *= learning_rate_decay
-'''
-    if i%100== 0:
-        print(f(loss))
-        print(sess.run(accuracy, feed_dict={x: batch_xs, y_true: batch_ys}))
-        print(sess.run(accuracy, feed_dict={x: cifar.test_images, y_true: cifar.test_labels}))
-'''
-
-''' TEST '''
-correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TODO: IS THIS THE RIGHT TESTING
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-print(sess.run(accuracy, feed_dict={x: cifar.test_images, y_true: cifar.test_labels}))
-
-
-''' DEBUG '''
-y1= sess.run(y_1_eval, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-x1 = sess.run(x_1, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-w1 = sess.run(W_1, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-b1 = sess.run(b_1, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-y2 = sess.run(y_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-x2 = sess.run(x_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-w2 = sess.run(W_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-b2 = sess.run(b_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})

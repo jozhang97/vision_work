@@ -6,6 +6,7 @@ cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
 ''' HYPERPARAMETERS '''
 n_classes = 10
 learning_rate = 0.1
+tf.summary.scalar('learning_rate', learning_rate)
 learning_rate_decay = 0.1
 decays_per_epoch= 1/10
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000 
@@ -76,30 +77,24 @@ f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test.images, y_true: cifar
 g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
 
 ''' DEFINE LOSS FUNCTION '''
-# try use this loss function tf.nn.log_poisson_loss
 cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
 tf.summary.scalar('cross_entropy', cross_entropy_2)
-regularization = tf.nn.l2_loss(W_1) + tf.nn.l2_loss(b_1) + tf.nn.l2_loss(W_2) + tf.nn.l2_loss(b_2) + tf.nn.l2_loss(W_22) + tf.nn.l2_loss(b_22) + tf.nn.l2_loss(W_4) + tf.nn.l2_loss(b_4)
-loss = cross_entropy_2 + reg_coeff * regularization
+loss = cross_entropy_2
+tf.summary.scalar('loss', loss)
+tf.summary.histogram('Training_loss', loss) 
 
 
 ''' DEFINE OPTIMIZATION TECHNIQUE '''
-tf.summary.scalar('learning_rate', learning_rate)
 train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-
-correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TODO: IS THIS THE RIGHT TESTING
+correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar('accuracy', accuracy)
-#train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
-''' TRAIN '''
-
-sess = tf.Session()
-tf.summary.scalar('training_loss', loss)
-tf.summary.histogram('Training_loss', loss) 
 tf.summary.histogram('Accuracy', accuracy)
 
-merged = tf.summary.merge_all()
 
+''' TRAIN '''
+sess = tf.Session()
+merged = tf.summary.merge_all()
 init = tf.global_variables_initializer()
 train_writer = tf.summary.FileWriter('tensorboard_log5/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log5/test')
@@ -120,23 +115,3 @@ for i in range(60000* 10):
     if i % 6000 == 0:
     #if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
         learning_rate *= learning_rate_decay 
-
-
-
-
-''' TEST '''
-correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) #TODO: IS THIS THE RIGHT TESTING
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-print(sess.run(accuracy, feed_dict={x: cifar.test.images, y_true: cifar.test.labels}))
-
-
-''' DEBUG 
-y1= sess.run(y_1_eval, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-x1 = sess.run(x_1, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-w1 = sess.run(W_1, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-b1 = sess.run(b_1, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-y2 = sess.run(y_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-x2 = sess.run(x_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-w2 = sess.run(W_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-b2 = sess.run(b_2, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
-'''
