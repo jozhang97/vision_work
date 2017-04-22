@@ -79,22 +79,26 @@ with tf.device(device_name):
     g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
 
 
-    # LOSS FUNCTIONS
-    with tf.variable_scope('weights_norm') as scope:
-        weights_norm = tf.reduce_sum(
-            input_tensor = WEIGHT_DECAY_FACTOR*tf.pack(
-              [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
-            ),
-            name='weights_norm'
-    )
-    tf.summary.scalar('weights_norm', weights_norm)
-    tf.add_to_collection('losses', weights_norm)
-    ''' DEFINE LOSS FUNCTION '''
+    # # LOSS FUNCTIONS
+    # with tf.variable_scope('weights_norm') as scope:
+    #     weights_norm = tf.reduce_sum(
+    #         input_tensor = WEIGHT_DECAY_FACTOR*tf.pack(
+    #           [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
+    #         ),
+    #         name='weights_norm'
+    # )
+    # tf.summary.scalar('weights_norm', weights_norm)
+    # tf.add_to_collection('losses', weights_norm)
+    # ''' DEFINE LOSS FUNCTION '''
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
     tf.summary.scalar('cross_entropy', cross_entropy)
-    tf.add_to_collection('losses', cross_entropy)
-    loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
+    # tf.add_to_collection('losses', cross_entropy)
+    # loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
 
+    reg_coeff = 0.01
+    regularization = tf.nn.l2_loss(W_1) + tf.nn.l2_loss(b_1) + tf.nn.l2_loss(W_2) + tf.nn.l2_loss(b_2) + tf.nn.l2_loss(W_22) + tf.nn.l2_loss(b_22) + tf.nn.l2_loss(W_4) + tf.nn.l2_loss(b_4) + tf.nn.l2_loss(W_3) + tf.nn.l2_loss(b_3)
+    tf.summary.scalar("regularization", regularization)
+    loss = cross_entropy + reg_coeff * regularization
     tf.summary.scalar('loss', loss)
     tf.summary.histogram('loss', loss) 
 
