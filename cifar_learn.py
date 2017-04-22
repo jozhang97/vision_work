@@ -3,6 +3,7 @@ import numpy as np
 from data_generator import Cifar
 cifar = Cifar()
 
+device_name = "/gpu:0"
 ''' HYPERPARAMETERS '''
 n_classes = 10
 learning_rate = 0.1
@@ -31,65 +32,70 @@ def variable_summaries(name, var):
     tf.summary.histogram('histogram', var)
 
 ''' DEFINE VARIABLES '''
-x = tf.placeholder(tf.float32, [None, 3072])
-x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
-W_4 = tf.Variable(tf.truncated_normal([5,5,3,64], mean=0, stddev=1.0))
-variable_summaries("W_4", W_4)
-b_4 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
-conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
-relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
-pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
-y_4 = tf.nn.local_response_normalization(pooled_4)
-W_3 = tf.Variable(tf.truncated_normal([5,5,64,64], mean=0, stddev=1.0))
-variable_summaries("W_3", W_3)
-b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
-variable_summaries("b_3", b_3)
-conv_3 = tf.nn.conv2d(y_4, W_3, strides=[1,1,1,1], padding="VALID")
-conv_3 = tf.nn.local_response_normalization(conv_3)
-relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
-pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
-y_3 = tf.reshape(pooled_3, [-1, 20*20*64])
-x_22 = y_3
-W_22 = tf.Variable(tf.truncated_normal([20*20*64,512], mean=0, stddev=1.0))
-variable_summaries("W_22", W_22)
-b_22 = tf.Variable(tf.truncated_normal([512], mean=0, stddev=1.0))
-variable_summaries("b_22", b_22)
-y_22 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_22, W_22), b_22))
-x_2 = y_22
-W_2 = tf.Variable(tf.truncated_normal([512, 256], mean=0, stddev=1.0))
-variable_summaries("W_2", W_2)
-b_2 = tf.Variable(tf.truncated_normal([256], mean=0, stddev=1.0))
-variable_summaries("b_2", b_2)
-y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_2, W_2), b_2))
-x_1 = y_2
-W_1 = tf.Variable(tf.truncated_normal([256, n_classes], mean=0, stddev=1.0))
-variable_summaries("W_1", W_1)
-b_1 = tf.Variable(tf.truncated_normal([n_classes], mean=0, stddev=1.0))
-variable_summaries("b_1", b_1)
-y_1_eval = tf.nn.bias_add(tf.matmul(x_1, W_1) , b_1)
-y_1 = tf.nn.dropout(y_1_eval, dropout_keep_prob)
-y_true = tf.placeholder(tf.float32, [None, n_classes])
+with tf.device(device_name):
+    x = tf.placeholder(tf.float32, [None, 3072])
+    x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
+    W_4 = tf.Variable(tf.truncated_normal([5,5,3,64], mean=0, stddev=1.0))
+    variable_summaries("W_4", W_4)
+    b_4 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
+    conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
+    relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
+    pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
+    y_4 = tf.nn.local_response_normalization(pooled_4)
+    W_3 = tf.Variable(tf.truncated_normal([5,5,64,64], mean=0, stddev=1.0))
+    variable_summaries("W_3", W_3)
+    b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
+    variable_summaries("b_3", b_3)
+    conv_3 = tf.nn.conv2d(y_4, W_3, strides=[1,1,1,1], padding="VALID")
+    conv_3 = tf.nn.local_response_normalization(conv_3)
+    relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
+    pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
+    y_3 = tf.reshape(pooled_3, [-1, 20*20*64])
+    x_22 = y_3
+    W_22 = tf.Variable(tf.truncated_normal([20*20*64,512], mean=0, stddev=1.0))
+    variable_summaries("W_22", W_22)
+    b_22 = tf.Variable(tf.truncated_normal([512], mean=0, stddev=1.0))
+    variable_summaries("b_22", b_22)
+    y_22 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_22, W_22), b_22))
+    x_2 = y_22
+    W_2 = tf.Variable(tf.truncated_normal([512, 256], mean=0, stddev=1.0))
+    variable_summaries("W_2", W_2)
+    b_2 = tf.Variable(tf.truncated_normal([256], mean=0, stddev=1.0))
+    variable_summaries("b_2", b_2)
+    y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_2, W_2), b_2))
+    x_1 = y_2
+    W_1 = tf.Variable(tf.truncated_normal([256, n_classes], mean=0, stddev=1.0))
+    variable_summaries("W_1", W_1)
+    b_1 = tf.Variable(tf.truncated_normal([n_classes], mean=0, stddev=1.0))
+    variable_summaries("b_1", b_1)
+    y_1_eval = tf.nn.bias_add(tf.matmul(x_1, W_1) , b_1)
+    y_1 = tf.nn.dropout(y_1_eval, dropout_keep_prob)
+    y_true = tf.placeholder(tf.float32, [None, n_classes])
 
-f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
+    f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test_images, y_true: cifar.test_labels})
 
-''' DEFINE LOSS FUNCTION '''
-cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
-tf.summary.scalar("cross_entropy", cross_entropy_2)
-loss = cross_entropy_2 
-tf.summary.scalar("loss", loss)
+    ''' DEFINE LOSS FUNCTION '''
+    cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
+    tf.summary.scalar("cross_entropy", cross_entropy_2)
+    loss = cross_entropy_2 
+    tf.summary.scalar("loss", loss)
 
 
-''' DEFINE OPTIMIZATION TECHNIQUE '''
-train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-tf.summary.scalar("accuracy", accuracy)
+    ''' DEFINE OPTIMIZATION TECHNIQUE '''
+    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    tf.summary.scalar("accuracy", accuracy)
 
 
 ''' TRAIN '''
 merged = tf.summary.merge_all()
 init = tf.global_variables_initializer()
-sess = tf.Session()
+
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+# config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
+config = tf.ConfigProto(allow_soft_placement = True)
+sess = tf.Session(config = config)
 train_writer = tf.summary.FileWriter('tensorboard_log6/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log6/test')
 sess.run(init)

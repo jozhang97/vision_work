@@ -78,20 +78,34 @@ with tf.device(device_name):
     f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test.images, y_true: cifar.test.labels})
     g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
 
-    ''' DEFINE LOSS FUNCTION '''
-    cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
-    tf.summary.scalar('cross_entropy', cross_entropy_2)
-    loss = cross_entropy_2
-    tf.summary.scalar('loss', loss)
-    tf.summary.histogram('Training_loss', loss) 
 
+    # LOSS FUNCTIONS
+    with tf.variable_scope('weights_norm') as scope:
+        weights_norm = tf.reduce_sum(
+            input_tensor = WEIGHT_DECAY_FACTOR*tf.pack(
+              [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
+            ),
+            name='weights_norm'
+    )
+    tf.summary.scalar('weights_norm', weights_norm)
+    tf.add_to_collection('losses', weights_norm)
+    ''' DEFINE LOSS FUNCTION '''
+    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
+    tf.summary.scalar('cross_entropy', cross_entropy)
+    tf.add_to_collection('losses', cross_entropy)
+    loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
+
+    tf.summary.scalar('loss', loss)
+    tf.summary.histogram('loss', loss) 
+
+    
 
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
     correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
-    tf.summary.histogram('Accuracy', accuracy)
+    tf.summary.histogram('accuracy', accuracy)
 
 
 ''' TRAIN '''
