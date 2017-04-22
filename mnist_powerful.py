@@ -31,65 +31,66 @@ def variable_summaries(var):
 
 
 ''' DEFINE VARIABLES '''
-x = tf.placeholder(tf.float32, [None, 784])
-x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
+with tf.device(device_name):
+    x = tf.placeholder(tf.float32, [None, 784])
+    x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
 
-W_4 = tf.Variable(tf.truncated_normal([5,5,1,64], mean=0, stddev=1.0))
-variable_summaries(W_4)
-b_4 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
-variable_summaries(b_4)
-conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
-relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
-pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
-y_4 = tf.nn.local_response_normalization(pooled_4)
-filter_shape = [5,5,64,64]
-W_3 = tf.Variable(tf.truncated_normal(filter_shape, mean=0, stddev=1.0))
-variable_summaries(W_3)
-b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
-variable_summaries(b_3)
-conv_3 = tf.nn.conv2d(y_4, W_3, strides=[1,1,1,1], padding="VALID")
-conv_3 = tf.nn.local_response_normalization(conv_3)
-relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
-pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
-y_3 = tf.reshape(pooled_3, [-1, 16*16*64])
-x_22 = tf.reshape(y_3, [-1, 16*16*64])
-W_22 = tf.Variable(tf.truncated_normal([16*16*64,512], mean=0, stddev=1.0))
-variable_summaries(W_22)
-b_22 = tf.Variable(tf.truncated_normal([512], mean=0, stddev=1.0))
-variable_summaries(b_22)
-y_22 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_22, W_22), b_22))
-x_2 = y_22
-W_2 = tf.Variable(tf.truncated_normal([512, 256], mean=0, stddev=1.0))
-variable_summaries(W_2)
-b_2 = tf.Variable(tf.truncated_normal([256], mean=0, stddev=1.0))
-variable_summaries(b_2)
-y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_2, W_2), b_2))
-x_1 = y_2
-W_1 = tf.Variable(tf.truncated_normal([256, n_classes], mean=0, stddev=1.0))
-variable_summaries(W_1)
-b_1 = tf.Variable(tf.truncated_normal([n_classes], mean=0, stddev=1.0))
-variable_summaries(b_1)
-y_1_eval = tf.nn.bias_add(tf.matmul(x_1, W_1) , b_1)
-y_1 = tf.nn.dropout(y_1_eval, dropout_keep_prob)
-y_true = tf.placeholder(tf.float32, [None, n_classes])
+    W_4 = tf.Variable(tf.truncated_normal([5,5,1,64], mean=0, stddev=1.0))
+    variable_summaries(W_4)
+    b_4 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
+    variable_summaries(b_4)
+    conv_4 = tf.nn.conv2d(x_reshaped, W_4, strides=[1,1,1,1], padding="VALID")
+    relu_4 = tf.nn.relu(tf.nn.bias_add(conv_4, b_4))
+    pooled_4 = tf.nn.max_pool(relu_4, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
+    y_4 = tf.nn.local_response_normalization(pooled_4)
+    filter_shape = [5,5,64,64]
+    W_3 = tf.Variable(tf.truncated_normal(filter_shape, mean=0, stddev=1.0))
+    variable_summaries(W_3)
+    b_3 = tf.Variable(tf.truncated_normal([64], mean=0, stddev=1.0))
+    variable_summaries(b_3)
+    conv_3 = tf.nn.conv2d(y_4, W_3, strides=[1,1,1,1], padding="VALID")
+    conv_3 = tf.nn.local_response_normalization(conv_3)
+    relu_3 = tf.nn.relu(tf.nn.bias_add(conv_3, b_3))
+    pooled_3 = tf.nn.max_pool(relu_3, ksize=[1,3,3,1], strides=[1,1,1,1], padding="VALID")
+    y_3 = tf.reshape(pooled_3, [-1, 16*16*64])
+    x_22 = tf.reshape(y_3, [-1, 16*16*64])
+    W_22 = tf.Variable(tf.truncated_normal([16*16*64,512], mean=0, stddev=1.0))
+    variable_summaries(W_22)
+    b_22 = tf.Variable(tf.truncated_normal([512], mean=0, stddev=1.0))
+    variable_summaries(b_22)
+    y_22 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_22, W_22), b_22))
+    x_2 = y_22
+    W_2 = tf.Variable(tf.truncated_normal([512, 256], mean=0, stddev=1.0))
+    variable_summaries(W_2)
+    b_2 = tf.Variable(tf.truncated_normal([256], mean=0, stddev=1.0))
+    variable_summaries(b_2)
+    y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(x_2, W_2), b_2))
+    x_1 = y_2
+    W_1 = tf.Variable(tf.truncated_normal([256, n_classes], mean=0, stddev=1.0))
+    variable_summaries(W_1)
+    b_1 = tf.Variable(tf.truncated_normal([n_classes], mean=0, stddev=1.0))
+    variable_summaries(b_1)
+    y_1_eval = tf.nn.bias_add(tf.matmul(x_1, W_1) , b_1)
+    y_1 = tf.nn.dropout(y_1_eval, dropout_keep_prob)
+    y_true = tf.placeholder(tf.float32, [None, n_classes])
 
-f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test.images, y_true: cifar.test.labels})
-g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
+    f = lambda alpha: sess.run(alpha, feed_dict={x: cifar.test.images, y_true: cifar.test.labels})
+    g = lambda alpha,x_s, y_s: sess.run(alpha, feed_dict={x: x_s, y_true: y_s})
 
-''' DEFINE LOSS FUNCTION '''
-cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
-tf.summary.scalar('cross_entropy', cross_entropy_2)
-loss = cross_entropy_2
-tf.summary.scalar('loss', loss)
-tf.summary.histogram('Training_loss', loss) 
+    ''' DEFINE LOSS FUNCTION '''
+    cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
+    tf.summary.scalar('cross_entropy', cross_entropy_2)
+    loss = cross_entropy_2
+    tf.summary.scalar('loss', loss)
+    tf.summary.histogram('Training_loss', loss) 
 
 
-''' DEFINE OPTIMIZATION TECHNIQUE '''
-train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-tf.summary.scalar('accuracy', accuracy)
-tf.summary.histogram('Accuracy', accuracy)
+    ''' DEFINE OPTIMIZATION TECHNIQUE '''
+    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    correct_prediction = tf.equal(tf.argmax(y_1_eval, 1), tf.argmax(y_true, 1)) 
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    tf.summary.scalar('accuracy', accuracy)
+    tf.summary.histogram('Accuracy', accuracy)
 
 
 ''' TRAIN '''
