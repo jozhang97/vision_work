@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
 
+device_name = "/gpu:0"
 ''' HYPERPARAMETERS '''
 n_classes = 10
 learning_rate = 0.1
@@ -95,8 +96,9 @@ with tf.device(device_name):
 
 ''' TRAIN '''
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-
-sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
+config = tf.ConfigProto(allow_soft_placement = True)
+sess = tf.Session(config = config)
 #sess = tf.Session()
 merged = tf.summary.merge_all()
 init = tf.global_variables_initializer()
