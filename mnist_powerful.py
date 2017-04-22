@@ -93,11 +93,14 @@ tf.summary.histogram('Accuracy', accuracy)
 
 
 ''' TRAIN '''
-sess = tf.Session()
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+
+sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+#sess = tf.Session()
 merged = tf.summary.merge_all()
 init = tf.global_variables_initializer()
-train_writer = tf.summary.FileWriter('tensorboard_log5/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log5/test')
+train_writer = tf.summary.FileWriter('tensorboard_log7/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log7/test')
 sess.run(init)
 for i in range(60000* 10):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
