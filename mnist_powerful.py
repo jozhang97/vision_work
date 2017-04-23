@@ -1,5 +1,5 @@
 import tensorflow as tf
-import helper_variable_generation
+import helper_variable_generation as hvg
 import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -21,26 +21,26 @@ dropout_keep_prob = tf.placeholder(tf.float32)
 
 with tf.device(device_name):
     ''' DEFINE VARIABLES '''
-    W = {"W_1": weight_variable([1024, n_classes]),
-        "W_2": weight_variable([7*7*64, 1024]), 
-        "W_3": weight_variable([5, 5, 32, 64]),
-        "W_4": weight_variable([5, 5, 1, 32]), 
+    W = {"W_1": hvg.weight_variable([1024, n_classes]),
+        "W_2": hvg.weight_variable([7*7*64, 1024]), 
+        "W_3": hvg.weight_variable([5, 5, 32, 64]),
+        "W_4": hvg.weight_variable([5, 5, 1, 32]), 
         }
-    b = {"b_1": bias_variable([n_classes]),
-        "b_2": bias_variable([1024]),
-        "b_3": bias_variable([64]),
-        "b_4": bias_variable([32]),
+    b = {"b_1": hvg.bias_variable([n_classes]),
+        "b_2": hvg.bias_variable([1024]),
+        "b_3": hvg.bias_variable([64]),
+        "b_4": hvg.bias_variable([32]),
         }
-    variable_summaries_map(W)
-    variable_summaries_map(b)
+    hvg.variable_summaries_map(W)
+    hvg.variable_summaries_map(b)
 
     x = tf.placeholder(tf.float32, [None, 784])
     x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
 
-    y_4 = max_pool_2x2(tf.nn.relu(tf.nn.bias_add(conv2d(x_reshaped, W["W_4"]), b["b_4"])))
+    y_4 = hvg.ax_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_4"]), b["b_4"])))
     # y_4 = tf.nn.local_response_normalization(y_4)
 
-    y_3 = max_pool_2x2(tf.nn.relu(tf.nn.bias_add(conv2d(y_4, W["W_3"]), b["b_3"])))
+    y_3 = hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_4, W["W_3"]), b["b_3"])))
     # y_3 = tf.nn.max_pool(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_ass(conv2d(y_4, W["W_3"]), b["b_3"]))))
     y_3 = tf.reshape(y_3, [-1, 7*7*64])
 

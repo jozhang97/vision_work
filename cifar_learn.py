@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import helper_variable_generation
+import helper_variable_generation as hvg
 from data_generator import Cifar
 cifar = Cifar()
 
@@ -24,28 +24,28 @@ dropout_keep_prob = tf.placeholder(tf.float32)
 with tf.device(device_name):
     ''' DEFINE VARIABLES '''
     W = {
-        "W_1": weight_variable([256, n_classes]),
-        "W_2": weight_variable([1024, 256]), 
-        "W_3": weight_variable([20*20*64, 1024]), 
-        "W_4": weight_variable([5, 5, 64, 64]), 
-        "W_5": weight_variable([5, 5, 3, 64]), 
+        "W_1": hvg.weight_variable([256, n_classes]),
+        "W_2": hvg.weight_variable([1024, 256]), 
+        "W_3": hvg.weight_variable([20*20*64, 1024]), 
+        "W_4": hvg.weight_variable([5, 5, 64, 64]), 
+        "W_5": hvg.weight_variable([5, 5, 3, 64]), 
         }
     b = {
-        "b_1": bias_variable([n_classes]),
-        "b_2": bias_variable([256]),
-        "b_3": bias_variable([1024]),
-        "b_4": bias_variable([64]),
-        "b_5": bias_variable([64]),
+        "b_1": hvg.bias_variable([n_classes]),
+        "b_2": hvg.bias_variable([256]),
+        "b_3": hvg.bias_variable([1024]),
+        "b_4": hvg.bias_variable([64]),
+        "b_5": hvg.bias_variable([64]),
         }
-    variable_summaries_map(W)
-    variable_summaries_map(b)
+    hvg.variable_summaries_map(W)
+    hvg.variable_summaries_map(b)
 
     x = tf.placeholder(tf.float32, [None, 3072])
     x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
 
-    y_5 = tf.nn.local_response_normalization(max_pool_2x2(tf.nn.relu(tf.nn.bias_add(conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
+    y_5 = tf.nn.local_response_normalization(hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
 
-    y_4 = max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(conv2d(y_5, W["W_4"]), b["b_4"]))))
+    y_4 = hvg.max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_5, W["W_4"]), b["b_4"]))))
     y_4 = tf.reshape(y_4, [-1, 20*20*64])
 
     y_3 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_4, W["W_3"]), b["b_3"]))
