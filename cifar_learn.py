@@ -1,4 +1,5 @@
 import tensorflow as tf
+import random
 import numpy as np
 import helper_variable_generation as hvg
 from data_generator import Cifar
@@ -26,7 +27,7 @@ with tf.device(device_name):
     W = {
         "W_1": hvg.weight_variable([256, n_classes]),
         "W_2": hvg.weight_variable([1024, 256]), 
-        "W_3": hvg.weight_variable([20*20*64, 1024]), 
+        "W_3": hvg.weight_variable([8*8*64, 1024]), 
         "W_4": hvg.weight_variable([5, 5, 64, 64]), 
         "W_5": hvg.weight_variable([5, 5, 3, 64]), 
         }
@@ -42,11 +43,11 @@ with tf.device(device_name):
 
     x = tf.placeholder(tf.float32, [None, 3072])
     x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
-
+    tf.summary.image("image", x_reshaped)
     y_5 = tf.nn.local_response_normalization(hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
 
     y_4 = hvg.max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_5, W["W_4"]), b["b_4"]))))
-    y_4 = tf.reshape(y_4, [-1, 20*20*64])
+    y_4 = tf.reshape(y_4, [-1, 8*8*64])
 
     y_3 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_4, W["W_3"]), b["b_3"]))
 
@@ -82,7 +83,8 @@ test_writer = tf.summary.FileWriter('tensorboard_log_cifar/test')
 sess.run(tf.global_variables_initializer())
 for i in range(60000 * 10):
     if i % 100 == 0:
-        summary, acc = sess.run([merged,accuracy], feed_dict={x: cifar.test_images, y_true: cifar.test_labels, dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
+        offset = random.randint(0, 499)
+        summary, acc = sess.run([merged,accuracy], feed_dict={x: cifar.test_images[offset*16:offset*16+16], y_true: cifar.test_labels[offset*16:offset*16+16], dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
         test_writer.add_summary(summary, i)
         print(acc)
     else:
