@@ -36,8 +36,8 @@ with tf.device(device_name):
 
     x = tf.placeholder(tf.float32, [None, 784])
     x_reshaped = tf.reshape(x, [-1, 28, 28, 1]) 
-
-    y_4 = hvg.ax_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_4"]), b["b_4"])))
+    tf.summary.image("image", x_reshaped)
+    y_4 = hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_4"]), b["b_4"])))
     # y_4 = tf.nn.local_response_normalization(y_4)
 
     y_3 = hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_4, W["W_3"]), b["b_3"])))
