@@ -7,7 +7,10 @@ device_name = "/gpu:0"
 ''' HYPERPARAMETERS '''
 n_classes = 10
 learning_rate = 1e-4
+learning_rate_placeholder = tf.placeholder(tf.float32)
 tf.summary.scalar('learning_rate', learning_rate)
+tf.summary.scalar('learning_rate_placeholder', learning_rate_placeholder)
+
 learning_rate_decay = 0.1 
 decays_per_epoch= 1/10
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000 
@@ -106,7 +109,7 @@ with tf.device(device_name):
     
 
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
-    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
     correct_prediction = tf.equal(tf.argmax(y_1, 1), tf.argmax(y_true, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
@@ -127,11 +130,11 @@ sess.run(init)
 for i in range(20000):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
     if i % 100 == 0 and i > 0:
-        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels, dropout_keep_prob: 1})
+        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels, dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
         test_writer.add_summary(summary, i)
         print(acc)
     else:
-        summary,_ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5})
+        summary,_ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
         train_writer.add_summary(summary, i)
     if i % 6000 == 0 and i > 0:
     #if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
