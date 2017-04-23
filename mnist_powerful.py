@@ -6,7 +6,7 @@ cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
 device_name = "/gpu:0"
 ''' HYPERPARAMETERS '''
 n_classes = 10
-learning_rate = 0.1
+learning_rate = 1e-4
 tf.summary.scalar('learning_rate', learning_rate)
 learning_rate_decay = 0.1 
 decays_per_epoch= 1/10
@@ -56,10 +56,10 @@ with tf.device(device_name):
         "W_3": weight_variable([5, 5, 32, 64]),
         "W_4": weight_variable([5, 5, 1, 32]), 
         }
-    b = {"b_1": bias_variable([n_classes])
-        "b_2": bias_variable([1024])
-        "b_3": bias_variable([64])
-        "b_4": bias_variable([32])
+    b = {"b_1": bias_variable([n_classes]),
+        "b_2": bias_variable([1024]),
+        "b_3": bias_variable([64]),
+        "b_4": bias_variable([32]),
         }
     variable_summaries_map(W)
     variable_summaries_map(b)
@@ -70,7 +70,7 @@ with tf.device(device_name):
     y_4 = max_pool_2x2(tf.nn.relu(tf.nn.bias_add(conv2d(x_reshaped, W["W_4"]), b["b_4"])))
     # y_4 = tf.nn.local_response_normalization(y_4)
 
-    y_3 = max_pool_2x2(tf.nn.relu(tf.nn.bias_ass(conv2d(y_4, W["W_3"]), b["b_3"])))
+    y_3 = max_pool_2x2(tf.nn.relu(tf.nn.bias_add(conv2d(y_4, W["W_3"]), b["b_3"])))
     # y_3 = tf.nn.max_pool(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_ass(conv2d(y_4, W["W_3"]), b["b_3"]))))
     y_3 = tf.reshape(y_3, [-1, 7*7*64])
 
@@ -124,10 +124,10 @@ init = tf.global_variables_initializer()
 train_writer = tf.summary.FileWriter('tensorboard_log_mnist/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log_mnist/test')
 sess.run(init)
-for i in range(60000* 10):
+for i in range(20000):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
-    if i % 100 == 0:
-        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images[100], y_true: cifar.test.labels[100], dropout_keep_prob: 1})
+    if i % 100 == 0 and i > 0:
+        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels, dropout_keep_prob: 1})
         test_writer.add_summary(summary, i)
         print(acc)
     else:
