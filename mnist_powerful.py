@@ -1,4 +1,5 @@
 import tensorflow as tf
+import helper_variable_generation
 import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -17,38 +18,6 @@ NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
 batch_size = 100 
 reg_coeff = 0.00005
 dropout_keep_prob = tf.placeholder(tf.float32)
-
-''' HELPER FUNCTION '''
-def variable_summaries(var):
-  """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-  with tf.name_scope('summaries'):
-    mean = tf.reduce_mean(var)
-    tf.summary.scalar('mean', mean)
-    with tf.name_scope('stddev'):
-      stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-    tf.summary.scalar('stddev', stddev)
-    tf.summary.scalar('max', tf.reduce_max(var))
-    tf.summary.scalar('min', tf.reduce_min(var))
-    tf.summary.histogram('histogram', var)
-
-def variable_summaries_map(mapp):
-    for vals in mapp.values():
-        variable_summaries(vals)
-
-def weight_variable(shape):
-  initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.Variable(initial)
-
-def bias_variable(shape):
-  initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
-
-def conv2d(x, W):
-  return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def max_pool_2x2(x):
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                        strides=[1, 2, 2, 1], padding='SAME')
 
 with tf.device(device_name):
     ''' DEFINE VARIABLES '''
