@@ -127,7 +127,7 @@ sess.run(init)
 for i in range(60000* 10):
     batch_xs, batch_ys = cifar.train.next_batch(batch_size)
     if i % 100 == 0:
-        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels, dropout_keep_prob: 1})
+        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images[100], y_true: cifar.test.labels[100], dropout_keep_prob: 1})
         test_writer.add_summary(summary, i)
         print(acc)
     else:
