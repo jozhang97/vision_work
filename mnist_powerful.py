@@ -8,8 +8,7 @@ device_name = "/gpu:0"
 n_classes = 10
 learning_rate = 1e-4
 learning_rate_placeholder = tf.placeholder(tf.float32)
-tf.summary.scalar('learning_rate', learning_rate)
-tf.summary.scalar('learning_rate_placeholder', learning_rate_placeholder)
+tf.summary.scalar('learning_rate', learning_rate_placeholder)
 
 learning_rate_decay = 0.1 
 decays_per_epoch= 1/10
@@ -118,7 +117,6 @@ with tf.device(device_name):
 ''' TRAIN '''
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
-config = tf.ConfigProto(allow_soft_placement = True)
 sess = tf.Session(config = config)
 #sess = tf.Session()
 merged = tf.summary.merge_all()
