@@ -17,7 +17,6 @@ NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
 
 batch_size = 100 
 reg_coeff = 0.00005
-epsilon = tf.Variable(0.000000000000001 * np.ones([n_classes]), dtype=tf.float32)
 dropout_keep_prob = tf.placeholder(tf.float32)
 
 ''' HELPER FUNCTION '''
