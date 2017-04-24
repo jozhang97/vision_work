@@ -40,7 +40,7 @@ class Cifar:
         elapsedTime = time.time() - start # t = 0.04
         self.train_data = s1
 
-        self.test_images = s5['data']/1.0
+        self.test_images = s5['data']/255.0
         self.test_labels = one_hot(s5['labels'])
         #st = unpickle(folder+"test_batch")
         #self.test_images = st['data']/255.0
@@ -59,7 +59,7 @@ class Cifar:
             labels.append(train_data[index][1])
             picked.add(index)
         elapsedTime = time.time() - start # t = 0.0004
-        return np.array(data)/1.0, one_hot(labels) 
+        return np.array(data)/255.0, one_hot(labels) 
         #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
  
 def one_hot(lst): 
