@@ -101,13 +101,13 @@ with tf.device(device_name):
 
     with tf.variable_scope('weights_norm') as scope:
         weights_norm = tf.reduce_sum(
-          input_tensor = WEIGHT_DECAY_FACTOR*tf.pack(
+          input_tensor = WEIGHT_DECAY_FACTOR*tf.stack(
               [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
           ),
           name='weights_norm'
       )
     tf.add_to_collection('losses', weights_norm)
-    tf.summary.scalar(weights_norm)
+    tf.summary.scalar('weights_norm', weights_norm)
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
     tf.summary.scalar("cross_entropy", cross_entropy)
     tf.add_to_collection('losses', cross_entropy)
@@ -116,7 +116,7 @@ with tf.device(device_name):
 
     loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
     losses = tf.get_collection('losses')
-    loss_averages_op = loss_averages.apply(losses + [total_loss])
+    loss_averages_op = loss_averages.apply(losses + [loss])
 
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
