@@ -44,7 +44,7 @@ with tf.device(device_name):
     y_4 = tf.nn.local_response_normalization(y_4)
 
     # y_3 = hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_4, W["W_3"]), b["b_3"])))
-    y_3 = tf.nn.max_pool(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(conv2d(y_4, W["W_3"]), b["b_3"]))))
+    y_3 = hvg.max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_4, W["W_3"]), b["b_3"]))))
     y_3 = tf.reshape(y_3, [-1, 8*8*64])
 
     y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_3, W["W_2"]), b["b_2"]))
