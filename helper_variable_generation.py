@@ -31,7 +31,7 @@ def bias_variable(shape):
 
 def conv2d(x, W):
   with tf.device(device_name):
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+    return tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='SAME')
 
 def max_pool_2x2(x):
   with tf.device(device_name):
@@ -41,4 +41,9 @@ def max_pool_2x2(x):
 def max_pool_3x3(x):
   with tf.device(device_name):
     return tf.nn.max_pool(x, ksize=[1, 3, 3, 1],
+                      strides=[1, 2, 2, 1], padding='SAME')
+
+def avg_pool(x):
+  with tf.device(device_name):
+    return tf.nn.avg_pool(x, ksize=[1, 3, 3, 1],
                       strides=[1, 2, 2, 1], padding='SAME')
