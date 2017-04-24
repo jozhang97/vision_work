@@ -2,24 +2,27 @@ import tensorflow as tf
 import helper_variable_generation as hvg
 import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
-cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
 
 device_name = "/gpu:0"
-''' HYPERPARAMETERS '''
-n_classes = 10
-learning_rate = 1e-4
-learning_rate_placeholder = tf.placeholder(tf.float32)
-tf.summary.scalar('learning_rate', learning_rate_placeholder)
 
-learning_rate_decay = 0.1 
-decays_per_epoch= 1/10
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000 
 
-batch_size = 100 
-reg_coeff = 0.00005
-dropout_keep_prob = tf.placeholder(tf.float32)
 
 with tf.device(device_name):
+    cifar= input_data.read_data_sets("MNIST_data/", one_hot=True)
+
+    ''' HYPERPARAMETERS '''
+    n_classes = 10
+    learning_rate = 1e-4
+    learning_rate_placeholder = tf.placeholder(tf.float32)
+    tf.summary.scalar('learning_rate', learning_rate_placeholder)
+
+    learning_rate_decay = 0.1 
+    decays_per_epoch= 1/10
+    NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000 
+
+    batch_size = 100 
+    reg_coeff = 0.00005
+    dropout_keep_prob = tf.placeholder(tf.float32)
     ''' DEFINE VARIABLES '''
     W = {"W_1": hvg.weight_variable([1024, n_classes]),
         "W_2": hvg.weight_variable([7*7*64, 1024]), 

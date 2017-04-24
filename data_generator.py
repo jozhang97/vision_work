@@ -14,53 +14,63 @@ padding - pads the sides with 0's. keeps the size of the image the same
 import random
 import numpy as np
 import time
+import tensorflow as tf
 folder = "CIFAR_data/"
+
+device_name = "/gpu:0"
+
+
+
 class Cifar:
 
 # shuffle data and pick 100
 # randomly pick 100
     def __init__(self):
-        s1 = unpickle(folder+"data_batch_1")
-        s2 = unpickle(folder+"data_batch_2")
-        s3 = unpickle(folder+"data_batch_3")
-        s4 = unpickle(folder+"data_batch_4")
-        s5 = unpickle(folder+"data_batch_5")
-        self.s5 = s5
-        start = time.time()
-        s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
-        s2 = zip(apply_RGB_subtraction(s2['data']), s2['labels'])
-        s3 = zip(apply_RGB_subtraction(s3['data']), s3['labels'])
-        s4 = zip(apply_RGB_subtraction(s4['data']), s4['labels'])
-        #s5 = zip(s5['data'], s5['labels'])
-        s1.extend(s2)
-        s1.extend(s3)
-        s1.extend(s4)
-        #s1.extend(s5)
-        random.shuffle(s1)
-        elapsedTime = time.time() - start # t = 0.04
-        self.train_data = s1
+        with tf.device(device_name):
 
-        self.test_images = apply_RGB_subtraction(s5['data'])
-        self.test_labels = one_hot(s5['labels'])
-        #st = unpickle(folder+"test_batch")
-        #self.test_images = st['data']/255.0
-        #self.test_labels = one_hot(st['labels'])
+            s1 = unpickle(folder+"data_batch_1")
+            s2 = unpickle(folder+"data_batch_2")
+            s3 = unpickle(folder+"data_batch_3")
+            s4 = unpickle(folder+"data_batch_4")
+            s5 = unpickle(folder+"data_batch_5")
+            self.s5 = s5
+            start = time.time()
+            s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
+            s2 = zip(apply_RGB_subtraction(s2['data']), s2['labels'])
+            s3 = zip(apply_RGB_subtraction(s3['data']), s3['labels'])
+            s4 = zip(apply_RGB_subtraction(s4['data']), s4['labels'])
+            #s5 = zip(s5['data'], s5['labels'])
+            s1.extend(s2)
+            s1.extend(s3)
+            s1.extend(s4)
+            #s1.extend(s5)
+            random.shuffle(s1)
+            elapsedTime = time.time() - start # t = 0.04
+            self.train_data = s1
+
+            self.test_images = apply_RGB_subtraction(s5['data'])
+            self.test_labels = one_hot(s5['labels'])
+            #st = unpickle(folder+"test_batch")
+            #self.test_images = st['data']/255.0
+            #self.test_labels = one_hot(st['labels'])
      
     def train_next_batch(self, batch_size):
-        start = time.time()
-        train_data = self.train_data
-        n = len(train_data)
-        data = []; labels = []; picked = set()
-        for _ in range(batch_size):
-            index = random.randint(0, n - 1)
-            while (index in picked):
+        with tf.device(device_name):
+
+            start = time.time()
+            train_data = self.train_data
+            n = len(train_data)
+            data = []; labels = []; picked = set()
+            for _ in range(batch_size):
                 index = random.randint(0, n - 1)
-            data.append(train_data[index][0])
-            labels.append(train_data[index][1])
-            picked.add(index)
-        elapsedTime = time.time() - start # t = 0.0004
-        return np.array(data), one_hot(labels) 
-        #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
+                while (index in picked):
+                    index = random.randint(0, n - 1)
+                data.append(train_data[index][0])
+                labels.append(train_data[index][1])
+                picked.add(index)
+            elapsedTime = time.time() - start # t = 0.0004
+            return np.array(data), one_hot(labels) 
+            #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
  
 def apply_RGB_subtraction(arr):
     # arr has 3072 values, first 1024 are red, next green, then blue 

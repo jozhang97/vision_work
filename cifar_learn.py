@@ -3,31 +3,33 @@ import random
 import numpy as np
 import helper_variable_generation as hvg
 from data_generator import Cifar
-cifar = Cifar()
 
 device_name = "/gpu:0"
-''' HYPERPARAMETERS '''
-n_classes = 10
-learning_rate = 1e-3
-learning_rate_placeholder = tf.placeholder(tf.float32)
-tf.summary.scalar('learning_rate', learning_rate_placeholder)
-learning_rate_decay = 0.1
-WEIGHT_DECAY_FACTOR = 0.001
-
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
-DELAYS_PER_EPOCH = 1
-num_epochs_per_decay = 350
-
-batch_size = 100 
-reg_coeff = 0.00005
-dropout_keep_prob = tf.placeholder(tf.float32)
-
-''' HELPER FUNCTIONS '''
-def add_to_collection_weights(W):
-    for val in W.values():
-        tf.add_to_collection("weights", val)
 
 with tf.device(device_name):
+    cifar = Cifar()
+
+    ''' HYPERPARAMETERS '''
+    n_classes = 10
+    learning_rate = 1e-3
+    learning_rate_placeholder = tf.placeholder(tf.float32)
+    tf.summary.scalar('learning_rate', learning_rate_placeholder)
+    learning_rate_decay = 0.1
+    WEIGHT_DECAY_FACTOR = 0.001
+
+    NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
+    DELAYS_PER_EPOCH = 1
+    num_epochs_per_decay = 350
+
+    batch_size = 100 
+    reg_coeff = 0.00005
+    dropout_keep_prob = tf.placeholder(tf.float32)
+
+    ''' HELPER FUNCTIONS '''
+    def add_to_collection_weights(W):   
+        for val in W.values():
+            tf.add_to_collection("weights", val)
+
     ''' DEFINE VARIABLES '''
     W = {"W_1": hvg.weight_variable([192, n_classes]),
         "W_2": hvg.weight_variable([384, 192]), 
@@ -128,7 +130,7 @@ with tf.device(device_name):
     merged = tf.summary.merge_all()
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-    config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
+    config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=True)
     sess = tf.Session(config = config)
     train_writer = tf.summary.FileWriter('tensorboard_log_cifar2/train', sess.graph)
     test_writer = tf.summary.FileWriter('tensorboard_log_cifar2/test')
