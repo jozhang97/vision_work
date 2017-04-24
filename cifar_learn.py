@@ -109,8 +109,8 @@ merged = tf.summary.merge_all()
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
 sess = tf.Session(config = config)
-train_writer = tf.summary.FileWriter('tensorboard_log_cifar/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log_cifar/test')
+train_writer = tf.summary.FileWriter('tensorboard_log_cifar1/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log_cifar1/test')
 sess.run(tf.global_variables_initializer())
 for i in range(60000 * 10):
     if i % 100 == 0:
