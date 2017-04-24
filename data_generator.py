@@ -69,14 +69,13 @@ class Cifar:
  
 def apply_RGB_subtraction(arr):
     # arr has 3072 values, first 1024 are red, next green, then blue 
-    for j in r
-    for i in range(1024):
-        for j in range(10000):
+    for j in range(10000):
+        for i in range(1024):
             arr[j][i] -= 122
-    for i in range(1024, 2048):
-        arr[i] -= 116
-    for i in range(2048, 3072):
-        arr[i] -= 104
+        for i in range(1024, 2048):
+            arr[j][i] -= 116
+        for i in range(2048, 3072):
+            arr[j][i] -= 104
     return arr
 
 def one_hot(lst): 
