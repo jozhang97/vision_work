@@ -85,25 +85,25 @@ with tf.device(device_name):
     tf.summary.scalar('accuracy', accuracy)
     tf.summary.histogram('accuracy', accuracy)
 
-    ''' TRAIN '''
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-    config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
-    sess = tf.Session(config = config)
-    #sess = tf.Session()
-    merged = tf.summary.merge_all()
-    init = tf.global_variables_initializer()
-    train_writer = tf.summary.FileWriter('tensorboard_log_mnist/train', sess.graph)
-    test_writer = tf.summary.FileWriter('tensorboard_log_mnist/test')
-    sess.run(init)
-    for i in range(20000):
-        batch_xs, batch_ys = cifar.train.next_batch(batch_size)
-        if i % 100 == 0 and i > 0:
-            summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels, dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
-            test_writer.add_summary(summary, i)
-            print(acc)
-        else:
-            summary,_ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
-            train_writer.add_summary(summary, i)
-        if i % 6000 == 0 and i > 0:
-        #if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
-            learning_rate *= learning_rate_decay 
+''' TRAIN '''
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
+sess = tf.Session(config = config)
+#sess = tf.Session()
+merged = tf.summary.merge_all()
+init = tf.global_variables_initializer()
+train_writer = tf.summary.FileWriter('tensorboard_log_mnist/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log_mnist/test')
+sess.run(init)
+for i in range(20000):
+    batch_xs, batch_ys = cifar.train.next_batch(batch_size)
+    if i % 100 == 0 and i > 0:
+        summary,acc= sess.run([merged, accuracy], feed_dict={x:cifar.test.images, y_true: cifar.test.labels, dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
+        test_writer.add_summary(summary, i)
+        print(acc)
+    else:
+        summary,_ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
+        train_writer.add_summary(summary, i)
+    if i % 6000 == 0 and i > 0:
+    #if i%NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * decays_per_epoch == 0:
+        learning_rate *= learning_rate_decay 
