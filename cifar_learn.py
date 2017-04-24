@@ -24,19 +24,15 @@ dropout_keep_prob = tf.placeholder(tf.float32)
 
 with tf.device(device_name):
     ''' DEFINE VARIABLES '''
-    W = {
-        "W_1": hvg.weight_variable([256, n_classes]),
-        "W_2": hvg.weight_variable([1024, 256]), 
-        "W_3": hvg.weight_variable([8*8*64, 1024]), 
-        "W_4": hvg.weight_variable([5, 5, 64, 64]), 
-        "W_5": hvg.weight_variable([5, 5, 3, 64]), 
+    W = {"W_1": hvg.weight_variable([1024, n_classes]),
+        "W_2": hvg.weight_variable([7*7*64, 1024]), 
+        "W_3": hvg.weight_variable([5, 5, 32, 64]),
+        "W_4": hvg.weight_variable([5, 5, 3, 32]), 
         }
-    b = {
-        "b_1": hvg.bias_variable([n_classes]),
-        "b_2": hvg.bias_variable([256]),
-        "b_3": hvg.bias_variable([1024]),
-        "b_4": hvg.bias_variable([64]),
-        "b_5": hvg.bias_variable([64]),
+    b = {"b_1": hvg.bias_variable([n_classes]),
+        "b_2": hvg.bias_variable([1024]),
+        "b_3": hvg.bias_variable([64]),
+        "b_4": hvg.bias_variable([32]),
         }
     hvg.variable_summaries_map(W)
     hvg.variable_summaries_map(b)
@@ -44,18 +40,49 @@ with tf.device(device_name):
     x = tf.placeholder(tf.float32, [None, 3072])
     x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
     tf.summary.image("image", x_reshaped)
-    y_5 = tf.nn.local_response_normalization(hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
+    y_4 = hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_4"]), b["b_4"])))
+    y_4 = tf.nn.local_response_normalization(y_4)
 
-    y_4 = hvg.max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_5, W["W_4"]), b["b_4"]))))
-    y_4 = tf.reshape(y_4, [-1, 8*8*64])
-
-    y_3 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_4, W["W_3"]), b["b_3"]))
+    # y_3 = hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_4, W["W_3"]), b["b_3"])))
+    y_3 = tf.nn.max_pool(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_ass(conv2d(y_4, W["W_3"]), b["b_3"]))))
+    y_3 = tf.reshape(y_3, [-1, 8*8*64])
 
     y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_3, W["W_2"]), b["b_2"]))
     y_2 = tf.nn.dropout(y_2, dropout_keep_prob)
-    
-    y_1 = tf.nn.bias_add(tf.matmul(y_2, W["W_1"]), b["b_1"])
+    y_1 = tf.nn.bias_add(tf.matmul(y_2, W["W_1"]) , b["b_1"])
     y_true = tf.placeholder(tf.float32, [None, n_classes])
+
+    # W = {
+    #     "W_1": hvg.weight_variable([256, n_classes]),
+    #     "W_2": hvg.weight_variable([1024, 256]), 
+    #     "W_3": hvg.weight_variable([8*8*64, 1024]), 
+    #     "W_4": hvg.weight_variable([5, 5, 64, 64]), 
+    #     "W_5": hvg.weight_variable([5, 5, 3, 64]), 
+    #     }
+    # b = {
+    #     "b_1": hvg.bias_variable([n_classes]),
+    #     "b_2": hvg.bias_variable([256]),
+    #     "b_3": hvg.bias_variable([1024]),
+    #     "b_4": hvg.bias_variable([64]),
+    #     "b_5": hvg.bias_variable([64]),
+    #     }
+    # hvg.variable_summaries_map(W)
+    # hvg.variable_summaries_map(b)
+
+    # x = tf.placeholder(tf.float32, [None, 3072])
+    # x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
+    # tf.summary.image("image", x_reshaped)
+    # y_5 = tf.nn.local_response_normalization(hvg.max_pool_2x2(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
+
+    # y_4 = hvg.max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_5, W["W_4"]), b["b_4"]))))
+    # y_4 = tf.reshape(y_4, [-1, 8*8*64])
+
+    # y_3 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_4, W["W_3"]), b["b_3"]))
+
+    # y_2 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_3, W["W_2"]), b["b_2"]))
+    # y_2 = tf.nn.dropout(y_2, dropout_keep_prob)
+    # y_1 = tf.nn.bias_add(tf.matmul(y_2, W["W_1"]), b["b_1"])
+    # y_true = tf.placeholder(tf.float32, [None, n_classes])
 
 
     ''' DEFINE LOSS FUNCTION '''
