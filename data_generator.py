@@ -25,17 +25,12 @@ class Cifar:
         s3 = unpickle(folder+"data_batch_3")
         s4 = unpickle(folder+"data_batch_4")
         s5 = unpickle(folder+"data_batch_5")
-        s1 = apply_RGB_subtraction(s1)
-        s2 = apply_RGB_subtraction(s2)
-        s3 = apply_RGB_subtraction(s3)
-        s4 = apply_RGB_subtraction(s4)
-        s5 = apply_RGB_subtraction(s5)
         self.s5 = s5
         start = time.time()
-        s1 = zip(s1['data'], s1['labels'])
-        s2 = zip(s2['data'], s2['labels'])
-        s3 = zip(s3['data'], s3['labels'])
-        s4 = zip(s4['data'], s4['labels'])
+        s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
+        s2 = zip(apply_RGB_subtraction(s2['data']), s2['labels'])
+        s3 = zip(apply_RGB_subtraction(s3['data']), s3['labels'])
+        s4 = zip(apply_RGB_subtraction(s4['data']), s4['labels'])
         #s5 = zip(s5['data'], s5['labels'])
         s1.extend(s2)
         s1.extend(s3)
@@ -45,7 +40,7 @@ class Cifar:
         elapsedTime = time.time() - start # t = 0.04
         self.train_data = s1
 
-        self.test_images = s5['data']
+        self.test_images = apply_RGB_subtraction(s5['data'])
         self.test_labels = one_hot(s5['labels'])
         #st = unpickle(folder+"test_batch")
         #self.test_images = st['data']/255.0
