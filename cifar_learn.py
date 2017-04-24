@@ -123,11 +123,8 @@ with tf.device(device_name):
     correct_prediction = tf.equal(tf.argmax(y_1, 1), tf.argmax(y_true, 1)) 
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar("accuracy", accuracy)
-
-
-
-
-''' TRAIN '''
+    
+    ''' TRAIN '''
     merged = tf.summary.merge_all()
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
