@@ -25,6 +25,11 @@ class Cifar:
         s3 = unpickle(folder+"data_batch_3")
         s4 = unpickle(folder+"data_batch_4")
         s5 = unpickle(folder+"data_batch_5")
+        s1 = apply_RGB_subtraction(s1)
+        s2 = apply_RGB_subtraction(s2)
+        s3 = apply_RGB_subtraction(s3)
+        s4 = apply_RGB_subtraction(s4)
+        s5 = apply_RGB_subtraction(s5)
         self.s5 = s5
         start = time.time()
         s1 = zip(s1['data'], s1['labels'])
@@ -40,7 +45,7 @@ class Cifar:
         elapsedTime = time.time() - start # t = 0.04
         self.train_data = s1
 
-        self.test_images = s5['data']/255.0
+        self.test_images = s5['data']
         self.test_labels = one_hot(s5['labels'])
         #st = unpickle(folder+"test_batch")
         #self.test_images = st['data']/255.0
@@ -59,9 +64,21 @@ class Cifar:
             labels.append(train_data[index][1])
             picked.add(index)
         elapsedTime = time.time() - start # t = 0.0004
-        return np.array(data)/255.0, one_hot(labels) 
+        return np.array(data), one_hot(labels) 
         #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
  
+def apply_RGB_subtraction(arr):
+    # arr has 3072 values, first 1024 are red, next green, then blue 
+    for j in r
+    for i in range(1024):
+        for j in range(10000):
+            arr[j][i] -= 122
+    for i in range(1024, 2048):
+        arr[i] -= 116
+    for i in range(2048, 3072):
+        arr[i] -= 104
+    return arr
+
 def one_hot(lst): 
     # lst: a list of labels
     ret = []

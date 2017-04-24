@@ -93,3 +93,11 @@ for i in range(60000 * 10):
         train_writer.add_summary(summary, i)
     if i % 10000 == 0 and i > 0:
         learning_rate *= learning_rate_decay
+
+
+
+
+'''
+fixed memory issue by making validation set smaller
+post conv/pool, image is 8x8
+'''
