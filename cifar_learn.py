@@ -128,26 +128,26 @@ with tf.device(device_name):
 
 
 ''' TRAIN '''
-merged = tf.summary.merge_all()
+    merged = tf.summary.merge_all()
 
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
-sess = tf.Session(config = config)
-train_writer = tf.summary.FileWriter('tensorboard_log_cifar2/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log_cifar2/test')
-sess.run(tf.global_variables_initializer())
-for i in range(60000 * 10):
-    if i % 100 == 0:
-        offset = random.randint(0, 499)
-        summary, acc = sess.run([merged,accuracy], feed_dict={x: cifar.test_images[offset*16:offset*16+16], y_true: cifar.test_labels[offset*16:offset*16+16], dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
-        test_writer.add_summary(summary, i)
-        print(acc)
-    else:
-        batch_xs, batch_ys = cifar.train_next_batch(batch_size)
-        summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
-        train_writer.add_summary(summary, i)
-    if i % 10000 == 0 and i > 0:
-        learning_rate *= learning_rate_decay
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+    config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
+    sess = tf.Session(config = config)
+    train_writer = tf.summary.FileWriter('tensorboard_log_cifar2/train', sess.graph)
+    test_writer = tf.summary.FileWriter('tensorboard_log_cifar2/test')
+    sess.run(tf.global_variables_initializer())
+    for i in range(60000 * 10):
+        if i % 100 == 0:
+            offset = random.randint(0, 499)
+            summary, acc = sess.run([merged,accuracy], feed_dict={x: cifar.test_images[offset*16:offset*16+16], y_true: cifar.test_labels[offset*16:offset*16+16], dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
+            test_writer.add_summary(summary, i)
+            print(acc)
+        else:
+            batch_xs, batch_ys = cifar.train_next_batch(batch_size)
+            summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
+            train_writer.add_summary(summary, i)
+        if i % 10000 == 0 and i > 0:
+            learning_rate *= learning_rate_decay
 
 
 
