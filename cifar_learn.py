@@ -12,6 +12,7 @@ learning_rate = 1e-3
 learning_rate_placeholder = tf.placeholder(tf.float32)
 tf.summary.scalar('learning_rate', learning_rate_placeholder)
 learning_rate_decay = 0.1
+WEIGHT_DECAY_FACTOR = 0.001
 
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
 DELAYS_PER_EPOCH = 1
@@ -21,6 +22,10 @@ batch_size = 100
 reg_coeff = 0.00005
 dropout_keep_prob = tf.placeholder(tf.float32)
 
+''' HELPER FUNCTIONS '''
+def add_to_collection_weights(W):
+    for val in W.values():
+        tf.add_to_collection("weights", val)
 
 with tf.device(device_name):
     ''' DEFINE VARIABLES '''
@@ -30,6 +35,7 @@ with tf.device(device_name):
         "W_4": hvg.weight_variable([5, 5, 64, 64]), 
         "W_5": hvg.weight_variable([5,5,3,64]),
         }
+    add_to_collection_weights(W)
     b = {"b_1": hvg.bias_variable([n_classes]),
         "b_2": hvg.bias_variable([192]),
         "b_3": hvg.bias_variable([384]),
@@ -92,11 +98,25 @@ with tf.device(device_name):
 
 
     ''' DEFINE LOSS FUNCTION '''
-    cross_entropy_2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
-    tf.summary.scalar("cross_entropy", cross_entropy_2)
-    loss = cross_entropy_2 
+
+    with tf.variable_scope('weights_norm') as scope:
+        weights_norm = tf.reduce_sum(
+          input_tensor = WEIGHT_DECAY_FACTOR*tf.pack(
+              [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
+          ),
+          name='weights_norm'
+      )
+    tf.add_to_collection('losses', weights_norm)
+    tf.summary.scalar(weights_norm)
+    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_1, labels=y_true))
+    tf.summary.scalar("cross_entropy", cross_entropy)
+    tf.add_to_collection('losses', cross_entropy)
+    loss = tf.add_n(tf.get_collection('losses'), name = 'total_loss') 
     tf.summary.scalar("loss", loss)
 
+    loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+    losses = tf.get_collection('losses')
+    loss_averages_op = loss_averages.apply(losses + [total_loss])
 
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
@@ -105,14 +125,16 @@ with tf.device(device_name):
     tf.summary.scalar("accuracy", accuracy)
 
 
+
+
 ''' TRAIN '''
 merged = tf.summary.merge_all()
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options)
 sess = tf.Session(config = config)
-train_writer = tf.summary.FileWriter('tensorboard_log_cifar1/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log_cifar1/test')
+train_writer = tf.summary.FileWriter('tensorboard_log_cifar2/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log_cifar2/test')
 sess.run(tf.global_variables_initializer())
 for i in range(60000 * 10):
     if i % 100 == 0:
