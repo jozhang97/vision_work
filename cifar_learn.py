@@ -25,7 +25,7 @@ dropout_keep_prob = tf.placeholder(tf.float32)
 with tf.device(device_name):
     ''' DEFINE VARIABLES '''
     W = {"W_1": hvg.weight_variable([1024, n_classes]),
-        "W_2": hvg.weight_variable([7*7*64, 1024]), 
+        "W_2": hvg.weight_variable([8*8*64, 1024]), 
         "W_3": hvg.weight_variable([5, 5, 32, 64]),
         "W_4": hvg.weight_variable([5, 5, 3, 32]), 
         }
