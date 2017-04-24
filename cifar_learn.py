@@ -26,7 +26,7 @@ with tf.device(device_name):
     ''' DEFINE VARIABLES '''
     W = {"W_1": hvg.weight_variable([192, n_classes]),
         "W_2": hvg.weight_variable([384, 192]), 
-        "W_3": hvg.weight_variable([dim, 384]),
+        "W_3": hvg.weight_variable([1000, 384]),
         "W_4": hvg.weight_variable([5, 5, 64, 64]), 
         "W_5": hvg.weight_variable([5,5,3,64]),
         }
@@ -42,11 +42,13 @@ with tf.device(device_name):
     x = tf.placeholder(tf.float32, [None, 3072])
     x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
     tf.summary.image("image", x_reshaped)
-    y_5 = tf.nn.local_response_normalization(yhvg.max_pool_3x3(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
+    y_5 = tf.nn.local_response_normalization(hvg.max_pool_3x3(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W["W_5"]), b["b_5"]))))
 
     y_4 = hvg.max_pool_2x2(tf.nn.local_response_normalization(tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_5, W["W_4"]), b["b_4"]))))
+    print(y_4.get_shape())
+
     dim = y_4.get_shape()[1].value
-    W["W_3"] = hvg.weight_variable([dim, 384])
+    W["W_3"] = hvg.weight_variable([dim * dim*64, 384])
     y_4 = tf.reshape(y_4, [-1, dim*dim*64])
 
     y_3 = tf.nn.relu(tf.nn.bias_add(tf.matmul(y_4, W["W_3"]), b["b_3"]))
