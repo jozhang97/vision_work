@@ -60,7 +60,7 @@ with tf.device(device_name):
     add_to_collection_weights(W)
     b = {
         "b_00": hvg.bias_variable([n_classes]),
-        "b_01": hvg.bias_variable([192]),
+        "b_01": hvg.bias_variable([1000]),
 
         "b_02": hvg.bias_variable([512]),
         "b_03": hvg.bias_variable([512]),

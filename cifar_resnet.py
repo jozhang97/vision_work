@@ -6,6 +6,8 @@ from data_generator import Cifar
 
 device_name = "/gpu:0"
 
+# 32x32 -> 16x16 -> 8x8 -> 4x4 -> 2x2 -> 1x1 really fast
+
 with tf.device(device_name):
     cifar = Cifar()
 
@@ -60,7 +62,7 @@ with tf.device(device_name):
     add_to_collection_weights(W)
     b = {
         "b_00": hvg.bias_variable([n_classes]),
-        "b_01": hvg.bias_variable([192]),
+        "b_01": hvg.bias_variable([1000]),
 
         "b_02": hvg.bias_variable([512]),
         "b_03": hvg.bias_variable([512]),
@@ -94,22 +96,22 @@ with tf.device(device_name):
     y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
     y_18 = hvg.max_pool_3x3(y_18)
 
-    y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17']), b['b_17']))
+    y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17'], stride=1), b['b_17']))
     y_16 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']) + y_18)
     y_15 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_16, W['W_15']), b['b_15']))
     y_14 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']) + y_16)
 
-    y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13']), b['b_13']))
+    y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13'], stride=1), b['b_13']))
     y_12 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']) + y_14)
     y_11 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_12, W['W_11']), b['b_11']))
     y_10 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_11, W['W_10']), b['b_10']) + y_12)
 
-    y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09']), b['b_09']))
+    y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09'], stride=1), b['b_09']))
     y_08 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']) + y_10)
     y_07 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_08, W['W_07']), b['b_07']))
     y_06 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']) + y_08)
 
-    y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05']), b['b_05']))
+    y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05'], stride=1), b['b_05']))
     y_04 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']) + y_06)
     y_03 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_04, W['W_03']), b['b_03']))
     y_02 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_03, W['W_02']), b['b_02']) + y_04)
@@ -117,7 +119,7 @@ with tf.device(device_name):
     y_02_pooled = hvg.avg_pool(y_02)
 
     dim = y_02_pooled.get_shape()[1].value
-    W["W_1"] = hvg.weight_variable([dim * dim*512, 1000])
+    W["W_01"] = hvg.weight_variable([dim * dim*512, 1000])
     y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
 
     y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])

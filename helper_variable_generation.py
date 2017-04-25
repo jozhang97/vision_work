@@ -29,9 +29,9 @@ def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
-def conv2d(x, W):
+def conv2d(x, W, stride=2):
   with tf.device(device_name):
-    return tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='SAME')
+    return tf.nn.conv2d(x, W, strides=[1, stride, stride, 1], padding='SAME')
 
 def max_pool_2x2(x):
   with tf.device(device_name):
