@@ -48,7 +48,7 @@ class Cifar:
             elapsedTime = time.time() - start # t = 0.04
             self.train_data = s1
 
-            self.test_images = convert_images_into_2D(apply_RGB_subtraction(s5['data']))
+            self.test_images = apply_RGB_subtraction(s5['data'])
             self.test_labels = one_hot(s5['labels'])
             #st = unpickle(folder+"test_batch")
             #self.test_images = st['data']/255.0
@@ -60,41 +60,16 @@ class Cifar:
             train_data = self.train_data
             n = len(train_data)
             data = []; labels = []; picked = set()
-            for _ in range(batch_size//2):
+            for _ in range(batch_size):
                 index = random.randint(0, n - 1)
                 while (index in picked):
                     index = random.randint(0, n - 1)
                 data.append(convert_image_into_2D(train_data[index][0]))
                 labels.append(train_data[index][1])
-                data.append(convert_image_into_2D(distort(train_data[index][0])))
-                labels.append(train_data[index][1])
                 picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
-
-def convert_images_into_2D(images):
-    images = tf.reshape(images, [-1, 3, 32, 32])
-    images = tf.transpose(images, [0, 2, 3, 1])
-    return images 
-
-def convert_image_into_2D(image):
-    image = tf.reshape(image, [3, 32, 32])
-    image = tf.transpose(image, [2,3,1])
-    return image
-
-def distort(reshaped_image, height = 32, weight = 32):
-  # Randomly crop a [height, width] section of the image.
-  # distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
-
-  # Randomly flip the image horizontally.
-  distorted_image = tf.image.random_flip_left_right(distorted_image)
-
-  # Because these operations are not commutative, consider randomizing
-  # the order their operation.
-  distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
-  distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-  return distorted_image
 
 
 def apply_RGB_subtraction(arr):

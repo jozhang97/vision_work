@@ -32,6 +32,29 @@ with tf.device(device_name):
         for val in W.values():
             tf.add_to_collection("weights", val)
 
+    def convert_images_into_2D(images):
+        images = tf.reshape(images, [-1, 3, 32, 32])
+        images = tf.transpose(images, [0, 2, 3, 1])
+        return images 
+
+    def distort_images(images):
+        # for i in range(images.get_shape()[0]):
+        #     distored_image = distort(images[i])
+        return images
+
+    def distort(reshaped_image, height = 24, weight = 24):
+      # Randomly crop a [height, width] section of the image.
+      # distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+
+      # Randomly flip the image horizontally.
+      distorted_image = tf.image.random_flip_left_right(distorted_image)
+
+      # Because these operations are not commutative, consider randomizing
+      # the order their operation.
+      distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
+      distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
+      return distorted_image
+
     def add_residual(small, big):
         # make sure same number of channels
         small_shape = small.get_shape().as_list()
@@ -100,11 +123,12 @@ with tf.device(device_name):
     hvg.variable_summaries_map(W)
     hvg.variable_summaries_map(b)
 
-    x = tf.placeholder(tf.float32, [None, 32, 32, 3])
-    tf.summary.image("image", x)
+    x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
+    x_reshaped = convert_images_into_2D(x)
+    x_reshaped = distort_images(x_reshaped)
+    tf.summary.image("image", x_reshaped)
 
-    print(x.get_shape())
-    y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x, W['W_18']), b['b_18']))
+    y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
     print(y_18.get_shape())
     y_18 = hvg.max_pool_3x3(y_18)
     print(y_18.get_shape())
