@@ -172,8 +172,8 @@ with tf.device(device_name):
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=False)
 sess = tf.Session(config = config)
-train_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/test')
+train_writer = tf.summary.FileWriter('tensorboard_log_cifar_18layer/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log_cifar_18layer/test')
 sess.run(tf.global_variables_initializer())
 for i in range(60000 * 10):
     if i % 100 == 0:

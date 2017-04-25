@@ -80,7 +80,7 @@ def convert_images_into_2D(images):
 
 def distort(reshaped_image, height = 32, weight = 32):
   # Randomly crop a [height, width] section of the image.
-  distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+  # distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
 
   # Randomly flip the image horizontally.
   distorted_image = tf.image.random_flip_left_right(distorted_image)
