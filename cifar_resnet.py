@@ -27,12 +27,7 @@ with tf.device(device_name):
     reg_coeff = 0.00005
     dropout_keep_prob = tf.placeholder(tf.float32)
 
-    ''' HELPER FUNCTIONS '''
-    def convert_image_into_2D(images):
-        images = tf.reshape(images, [-1, 3, 32, 32])
-        images = tf.transpose(images, [0, 2, 3, 1])
-        return images   
-
+    ''' HELPER FUNCTIONS '''  
     def add_to_collection_weights(W):   
         for val in W.values():
             tf.add_to_collection("weights", val)
@@ -105,8 +100,7 @@ with tf.device(device_name):
     hvg.variable_summaries_map(W)
     hvg.variable_summaries_map(b)
 
-    x = tf.placeholder(tf.float32, [None, 3072])
-    x_reshaped = convert_image_into_2D(x) 
+    x_reshaped = tf.placeholder(tf.float32, [None, 32, 32, 3])
     tf.summary.image("image", x_reshaped)
 
     print(x_reshaped.get_shape())
