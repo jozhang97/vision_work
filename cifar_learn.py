@@ -11,11 +11,11 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-3
+    learning_rate = 1e-4
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 0.001
+    WEIGHT_DECAY_FACTOR = 0.05
 
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
@@ -129,6 +129,7 @@ with tf.device(device_name):
     ''' TRAIN '''
     merged = tf.summary.merge_all()
 
+saver = tf.train.Saver()
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=True)
 sess = tf.Session(config = config)
@@ -145,10 +146,10 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
         train_writer.add_summary(summary, i)
-    if i % 10000 == 0 and i > 0:
+    if i % 15000 == 0 and i > 0:
         learning_rate *= learning_rate_decay
-
-
+    if i % 80000 == 0 and i > 0:
+        save_path = saver.save(sess, "tmp/model.ckpt")
 
 
 '''
