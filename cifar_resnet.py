@@ -13,7 +13,7 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-1
+    learning_rate = 1e-3
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
@@ -40,7 +40,7 @@ with tf.device(device_name):
         x_diff = big_shape[1] - small_shape[1]
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
-        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2], [y_diff // 2, y_diff // 2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
+        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
         return small + big
 
     ''' DEFINE VARIABLES '''
@@ -122,7 +122,7 @@ with tf.device(device_name):
 
     y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13'], stride=1), b['b_13']))
     y_12 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']))
-    y_12 = add_residual(y_12, y_14)
+#    y_12 = add_residual(y_12, y_14)
 
     y_11 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_12, W['W_11']), b['b_11']))
     y_10 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_11, W['W_10']), b['b_10']))
@@ -131,7 +131,7 @@ with tf.device(device_name):
 
     y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09'], stride=1), b['b_09']))
     y_08 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']))
-    y_08 = add_residual(y_08, y_10)
+#    y_08 = add_residual(y_08, y_10)
 
     y_07 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_08, W['W_07']), b['b_07']))
     y_06 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']))
@@ -140,7 +140,7 @@ with tf.device(device_name):
 
     y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05'], stride=1), b['b_05']))
     y_04 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']))
-    y_04 = add_residual(y_04, y_06)
+#    y_04 = add_residual(y_04, y_06)
 
     y_03 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_04, W['W_03']), b['b_03']))
     y_02 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_03, W['W_02']), b['b_02']) + y_04)
