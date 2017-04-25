@@ -117,7 +117,7 @@ with tf.device(device_name):
     y_02_pooled = hvg.avg_pool(y_02)
 
     dim = y_02_pooled.get_shape()[1].value
-    W["W_011"] = hvg.weight_variable([dim * dim*512, 1000])
+    W["W_01"] = hvg.weight_variable([dim * dim*512, 1000])
     y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
 
     y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])
