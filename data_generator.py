@@ -35,10 +35,10 @@ class Cifar:
             s5 = unpickle(folder+"data_batch_5")
             self.s5 = s5
             start = time.time()
-            s1 = zip(convert_images_into_2D(apply_RGB_subtraction(s1['data'])), s1['labels'])
-            s2 = zip(convert_images_into_2D(apply_RGB_subtraction(s2['data'])), s2['labels'])
-            s3 = zip(convert_images_into_2D(apply_RGB_subtraction(s3['data'])), s3['labels'])
-            s4 = zip(convert_images_into_2D(apply_RGB_subtraction(s4['data'])), s4['labels'])
+            s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
+            s2 = zip(apply_RGB_subtraction(s2['data']), s2['labels'])
+            s3 = zip(apply_RGB_subtraction(s3['data']), s3['labels'])
+            s4 = zip(apply_RGB_subtraction(s4['data']), s4['labels'])
             #s5 = zip(s5['data'], s5['labels'])
             s1.extend(s2)
             s1.extend(s3)
@@ -64,9 +64,9 @@ class Cifar:
                 index = random.randint(0, n - 1)
                 while (index in picked):
                     index = random.randint(0, n - 1)
-                data.append(train_data[index][0])
+                data.append(convert_image_into_2D(train_data[index][0]))
                 labels.append(train_data[index][1])
-                data.append(distort(train_data[index][0]))
+                data.append(convert_image_into_2D(distort(train_data[index][0])))
                 labels.append(train_data[index][1])
                 picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
@@ -77,6 +77,11 @@ def convert_images_into_2D(images):
     images = tf.reshape(images, [-1, 3, 32, 32])
     images = tf.transpose(images, [0, 2, 3, 1])
     return images 
+
+def convert_image_into_2D(image):
+    image = tf.reshape(image, [3, 32, 32])
+    image = tf.transpose(image, [2,3,1])
+    return image
 
 def distort(reshaped_image, height = 32, weight = 32):
   # Randomly crop a [height, width] section of the image.
