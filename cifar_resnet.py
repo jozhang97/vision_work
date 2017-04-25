@@ -34,12 +34,12 @@ with tf.device(device_name):
 
     def add_residual(small, big):
         # make sure same number of channels
-        small_shape = small.get_shape()
-        big_shape = big.get_shape()
+        small_shape = small.get_shape().as_list()
+        big_shape = big.get_shape().as_list()
         assert small_shape[3] == big_shape[3]
         x_diff = big_shape[1] - small_shape[1]
         y_diff = big_shape[2] - small_shape[2]
-        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2], [y_diff // 2, y_diff // 2], [0, 0]])
+        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2], [y_diff // 2, y_diff // 2], [0, 0]], "CONSTANT")
         return small + big
 
     ''' DEFINE VARIABLES '''
@@ -111,27 +111,40 @@ with tf.device(device_name):
 
     y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17'], stride=1), b['b_17']))
     print(y_17.get_shape())
-
     y_16 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']))
     y_16 = add_residual(y_16, y_18)
 
     y_15 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_16, W['W_15']), b['b_15']))
-    y_14 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']) + y_16)
+    y_14 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']))
+    y_14 = add_residual(y_14, y_16)
+
 
     y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13'], stride=1), b['b_13']))
-    y_12 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']) + y_14)
+    y_12 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']))
+    y_12 = add_residual(y_12, y_14)
+
     y_11 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_12, W['W_11']), b['b_11']))
-    y_10 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_11, W['W_10']), b['b_10']) + y_12)
+    y_10 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_11, W['W_10']), b['b_10']))
+    y_10 = add_residual(y_10, y_12)
+
 
     y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09'], stride=1), b['b_09']))
-    y_08 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']) + y_10)
+    y_08 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']))
+    y_08 = add_residual(y_08, y_10)
+
     y_07 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_08, W['W_07']), b['b_07']))
-    y_06 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']) + y_08)
+    y_06 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']))
+    y_06 = add_residual(y_06, y_08)
+
 
     y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05'], stride=1), b['b_05']))
-    y_04 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']) + y_06)
+    y_04 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']))
+    y_04 = add_residual(y_04, y_06)
+
     y_03 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_04, W['W_03']), b['b_03']))
     y_02 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_03, W['W_02']), b['b_02']) + y_04)
+    y_02 = add_residual(y_02, y_04)
+
 
     y_02_pooled = hvg.avg_pool(y_02)
 
