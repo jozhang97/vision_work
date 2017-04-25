@@ -36,10 +36,11 @@ with tf.device(device_name):
         # make sure same number of channels
         small_shape = small.get_shape().as_list()
         big_shape = big.get_shape().as_list()
-        assert small_shape[3] == big_shape[3]
+        # assert small_shape[3] == big_shape[3]
         x_diff = big_shape[1] - small_shape[1]
         y_diff = big_shape[2] - small_shape[2]
-        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2], [y_diff // 2, y_diff // 2], [0, 0]], "CONSTANT")
+        chan_diff = big_shape[3] - small_shape[3]
+        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2], [y_diff // 2, y_diff // 2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
         return small + big
 
     ''' DEFINE VARIABLES '''
