@@ -60,7 +60,7 @@ with tf.device(device_name):
     add_to_collection_weights(W)
     b = {
         "b_00": hvg.bias_variable([n_classes]),
-        "b_01": hvg.bias_variable([192]),
+        "b_01": hvg.bias_variable([1000]),
 
         "b_02": hvg.bias_variable([512]),
         "b_03": hvg.bias_variable([512]),
@@ -91,10 +91,14 @@ with tf.device(device_name):
     x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
     tf.summary.image("image", x_reshaped)
 
+    print(x_reshaped.get_shape())
     y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
+    print(y_18.get_shape())
     y_18 = hvg.max_pool_3x3(y_18)
+    print(y_18.get_shape())
 
     y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17']), b['b_17']))
+    print(y_17.get_shape())
     y_16 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']) + y_18)
     y_15 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_16, W['W_15']), b['b_15']))
     y_14 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']) + y_16)

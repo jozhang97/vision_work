@@ -60,7 +60,7 @@ with tf.device(device_name):
     add_to_collection_weights(W)
     b = {
         "b_00": hvg.bias_variable([n_classes]),
-        "b_01": hvg.bias_variable([192]),
+        "b_01": hvg.bias_variable([1000]),
 
         "b_02": hvg.bias_variable([512]),
         "b_03": hvg.bias_variable([512]),
@@ -92,17 +92,27 @@ with tf.device(device_name):
     tf.summary.image("image", x_reshaped)
 
     y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
+    print(y_18.get_shape())
     y_18 = hvg.max_pool_3x3(y_18)
+    print(y_18.get_shape())
 
     y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17']), b['b_17']))
+    print(y_17.get_shape())
     y_16 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']) )
+    print(y_16.get_shape())
     y_15 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_16, W['W_15']), b['b_15']))
+    print(y_15.get_shape())
     y_14 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']) )
+    print(y_14.get_shape())
 
     y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13']), b['b_13']))
+    print(y_13.get_shape())
     y_12 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']))
+    print(y_12.get_shape())
     y_11 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_12, W['W_11']), b['b_11']))
+    print(y_11.get_shape())
     y_10 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_11, W['W_10']), b['b_10'])  )
+    print(y_10.get_shape())
 
     y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09']), b['b_09']))
     y_08 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08'])  )
@@ -119,8 +129,10 @@ with tf.device(device_name):
     dim = y_02_pooled.get_shape()[1].value
     W["W_01"] = hvg.weight_variable([dim * dim*512, 1000])
     y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
+    print(dim)
 
     y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])
+    print(y_01.get_shape())
     y_01 = tf.nn.dropout(y_01, dropout_keep_prob)
     y_00 = tf.nn.bias_add(tf.matmul(y_01, W["W_00"]) , b["b_00"])
 
@@ -159,7 +171,7 @@ with tf.device(device_name):
     merged = tf.summary.merge_all()
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
-config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=True)
+config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=False)
 sess = tf.Session(config = config)
 train_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/test')
