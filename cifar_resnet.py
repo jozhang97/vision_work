@@ -32,6 +32,16 @@ with tf.device(device_name):
         for val in W.values():
             tf.add_to_collection("weights", val)
 
+    def add_residual(small, big):
+        # make sure same number of channels
+        small_shape = small.get_shape()
+        big_shape = big.get_shape()
+        assert small_shape[3] == big_shape[3]
+        x_diff = big_shape[1] - small_shape[1]
+        y_diff = big_shape[2] - small_shape[2]
+        small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2], [y_diff // 2, y_diff // 2], [0, 0]])
+        return small + big
+
     ''' DEFINE VARIABLES '''
     W = {
         "W_00": hvg.weight_variable([1000, n_classes]),
@@ -93,11 +103,18 @@ with tf.device(device_name):
     x_reshaped = tf.reshape(x, [-1, 32, 32, 3]) 
     tf.summary.image("image", x_reshaped)
 
+    print(x_reshaped.get_shape())
     y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
+    print(y_18.get_shape())
     y_18 = hvg.max_pool_3x3(y_18)
+    print(y_18.get_shape())
 
     y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17'], stride=1), b['b_17']))
-    y_16 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']) + y_18)
+    print(y_17.get_shape())
+
+    y_16 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']))
+    y_16 = add_residual(y_16, y_18)
+
     y_15 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_16, W['W_15']), b['b_15']))
     y_14 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']) + y_16)
 
