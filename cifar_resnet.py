@@ -11,17 +11,17 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-3
+    learning_rate = 1e-1
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 0.001
-
+    WEIGHT_DECAY_FACTOR = 0.0001
+    MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
     num_epochs_per_decay = 350
 
-    batch_size = 100 
+    batch_size = 128 
     reg_coeff = 0.00005
     dropout_keep_prob = tf.placeholder(tf.float32)
 
@@ -120,9 +120,9 @@ with tf.device(device_name):
     W["W_1"] = hvg.weight_variable([dim * dim*512, 1000])
     y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
 
-    y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_1"]) , b["b_1"])
+    y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])
     y_01 = tf.nn.dropout(y_01, dropout_keep_prob)
-    y_00 = tf.nn.bias_add(tf.matmul(y_01, W["W_0"]) , b["b_0"])
+    y_00 = tf.nn.bias_add(tf.matmul(y_01, W["W_00"]) , b["b_00"])
 
     y_true = tf.placeholder(tf.float32, [None, n_classes])
 
@@ -174,7 +174,7 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
         train_writer.add_summary(summary, i)
-    if i % 10000 == 0 and i > 0:
+    if i == 32000 or i == 48000:
         learning_rate *= learning_rate_decay
 
 

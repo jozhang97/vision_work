@@ -1,4 +1,4 @@
-mport tensorflow as tf
+import tensorflow as tf
 import random
 import numpy as np
 import helper_variable_generation as hvg
@@ -117,12 +117,12 @@ with tf.device(device_name):
     y_02_pooled = hvg.avg_pool(y_02)
 
     dim = y_02_pooled.get_shape()[1].value
-    W["W_1"] = hvg.weight_variable([dim * dim*512, 1000])
+    W["W_011"] = hvg.weight_variable([dim * dim*512, 1000])
     y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
 
-    y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_1"]) , b["b_1"])
+    y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])
     y_01 = tf.nn.dropout(y_01, dropout_keep_prob)
-    y_00 = tf.nn.bias_add(tf.matmul(y_01, W["W_0"]) , b["b_0"])
+    y_00 = tf.nn.bias_add(tf.matmul(y_01, W["W_00"]) , b["b_00"])
 
     y_true = tf.placeholder(tf.float32, [None, n_classes])
 
