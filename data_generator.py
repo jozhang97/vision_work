@@ -65,40 +65,52 @@ class Cifar:
                 index = random.randint(0, n - 1)
                 while (index in picked):
                     index = random.randint(0, n - 1)
-                data.append(train_data[index][0])
+                im1, im2 = process_image(train_data[index][0])
+                data.append(im1)
+                data.append(im2)
+                labels.append(train_data[index][1])
                 labels.append(train_data[index][1])
                 picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
 
-    def distort_images(images):
-        return images
-        new_images = []
-        for i in range(images.get_shape()[0]):
-            distorted_image = distort(images[i])
-            new_images.append(distorted_image)
-            new_images.append(crop(image[i]))
-        return np.array(new_images) 
+def process_image(image):
+    im = convert_image_into_2D(image)
+    im1 = crop(im)
+    im2 = distort(im)
+    return convert_image_into_1D(im1), convert_image_into_1D(im2)
 
-    def crop(image, height = 24, weight = 24):
-        resized_image = tf.random_crop(reshaped_image, [height, width, 3])
-        ret_image = tf.image.per_image_whitening(resized_image)
-        return ret_image
+def convert_image_into_2D(image):
+    image = np.reshape(image, [3, 32, 32])
+    image = np.swapaxes(image, 0, 2)
+    image = np.swapaxes(image, 0, 1)
+    return image
 
-    def distort(reshaped_image, height = 24, weight = 24):
-      # Randomly crop a [height, width] section of the image.
-      distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+def convert_image_into_1D(image):
+    image = np.swapaxes(image, 0, 1)
+    image = np.swapaxes(image, 0, 2)
+    image = np.reshape(image, [3*32*32])
+    return image
 
-      # Randomly flip the image horizontally.
-      distorted_image = tf.image.random_flip_left_right(distorted_image)
+def crop(image, height = 24, weight = 24):
+    resized_image = tf.random_crop(reshaped_image, [height, width, 3])
+    ret_image = tf.image.per_image_whitening(resized_image)
+    return ret_image
 
-      # Because these operations are not commutative, consider randomizing
-      # the order their operation.
-      distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
-      distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-      ret_image = tf.image.per_image_whitening(distorted_image)
-      return ret_image 
+def distort(reshaped_image, height = 24, weight = 24):
+  # Randomly crop a [height, width] section of the image.
+  distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+
+  # Randomly flip the image horizontally.
+  distorted_image = tf.image.random_flip_left_right(distorted_image)
+
+  # Because these operations are not commutative, consider randomizing
+  # the order their operation.
+  distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
+  distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
+  ret_image = tf.image.per_image_whitening(distorted_image)
+  return ret_image 
 
 
 def apply_RGB_subtraction(arr):
@@ -143,3 +155,8 @@ def test_image(s):
     image_reshaped = np.swapaxes(image_reshaped, 1,3)
     image_reshaped = np.swapaxes(image_reshaped, 2,1)
     tf.summary.image("No Preprocessing", image_reshaped)
+
+def convert_images_into_2D(images):
+    images = tf.reshape(images, [-1, 3, 32, 32])
+    images = tf.transpose(images, [0, 2, 3, 1])
+    return images 
