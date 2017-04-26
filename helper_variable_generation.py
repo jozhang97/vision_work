@@ -17,7 +17,7 @@ def variable_summaries(name, var):
 def variable_summaries_map(mapp):
   with tf.device(device_name):
     for name, vals in mapp.items():
-        variable_summaries(name, vals)
+        variable_summaries("Weight_" + name, vals)
 
 def weight_variable(shape):
   with tf.device(device_name):

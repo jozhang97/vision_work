@@ -33,6 +33,7 @@ class Cifar:
             s3 = unpickle(folder+"data_batch_3")
             s4 = unpickle(folder+"data_batch_4")
             s5 = unpickle(folder+"data_batch_5")
+            test_image(s1)
             self.s5 = s5
             start = time.time()
             s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
@@ -64,12 +65,28 @@ class Cifar:
                 index = random.randint(0, n - 1)
                 while (index in picked):
                     index = random.randint(0, n - 1)
-                data.append(convert_image_into_2D(train_data[index][0]))
+                data.append(train_data[index][0])
                 labels.append(train_data[index][1])
                 picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
+
+def crop(image, height=24, weight=24):
+    return tf.random_crop(image, [height, width, 3])
+
+def distort(reshaped_image, height = 24, weight = 24):
+  # Randomly crop a [height, width] section of the image.
+  distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+
+  # Randomly flip the image horizontally.
+  distorted_image = tf.image.random_flip_left_right(distorted_image)
+
+  # Because these operations are not commutative, consider randomizing
+  # the order their operation.
+  distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
+  distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
+  return distorted_image
 
 
 def apply_RGB_subtraction(arr):
@@ -107,3 +124,10 @@ def unpickle(file):
     with open(file, 'rb') as fo:
         dict = cPickle.load(fo)
     return dict
+
+def test_image(s):
+    image = s['data'][4:100]
+    image_reshaped = np.reshape(image, [-1, 3, 32,32])
+    image_reshaped = np.swapaxes(image_reshaped, 1,3)
+    image_reshaped = np.swapaxes(image_reshaped, 2,1)
+    tf.summary.image("No Preprocessing", image_reshaped)

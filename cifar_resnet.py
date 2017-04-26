@@ -13,7 +13,7 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-3
+    learning_rate = 1e-6
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
@@ -21,10 +21,9 @@ with tf.device(device_name):
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
-    num_epochs_per_decay = 350
 
     batch_size = 128 
-    reg_coeff = 0.00005
+    reg_coeff = 0.0005
     dropout_keep_prob = tf.placeholder(tf.float32)
 
     ''' HELPER FUNCTIONS '''  
@@ -64,6 +63,7 @@ with tf.device(device_name):
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
         #small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
+        return small
         return small + big
 
     ''' DEFINE VARIABLES '''
@@ -196,11 +196,6 @@ with tf.device(device_name):
     tf.add_to_collection('losses', cross_entropy)
     loss = tf.add_n(tf.get_collection('losses'), name = 'total_loss') 
     tf.summary.scalar("loss", loss)
-
-    loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
-    losses = tf.get_collection('losses')
-    loss_averages_op = loss_averages.apply(losses + [loss])
-
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
     correct_prediction = tf.equal(tf.argmax(y_00, 1), tf.argmax(y_true, 1)) 
@@ -209,6 +204,12 @@ with tf.device(device_name):
     
     ''' TRAIN '''
     merged = tf.summary.merge_all()
+'''
+    loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+    losses = tf.get_collection('losses')
+    loss_averages_op = loss_averages.apply(losses + [loss])
+'''
+
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=True)
@@ -226,7 +227,7 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
         train_writer.add_summary(summary, i)
-    if i == 32000 or i == 48000:
+    if i == 20000 or i == 32000 or i == 48000:
         learning_rate *= learning_rate_decay
 
 
