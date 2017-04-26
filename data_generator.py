@@ -72,21 +72,33 @@ class Cifar:
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
 
-def crop(image, height=24, weight=24):
-    return tf.random_crop(image, [height, width, 3])
+    def distort_images(images):
+        return images
+        new_images = []
+        for i in range(images.get_shape()[0]):
+            distorted_image = distort(images[i])
+            new_images.append(distorted_image)
+            new_images.append(crop(image[i]))
+        return np.array(new_images) 
 
-def distort(reshaped_image, height = 24, weight = 24):
-  # Randomly crop a [height, width] section of the image.
-  distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+    def crop(image, height = 24, weight = 24):
+        resized_image = tf.random_crop(reshaped_image, [height, width, 3])
+        ret_image = tf.image.per_image_whitening(resized_image)
+        return ret_image
 
-  # Randomly flip the image horizontally.
-  distorted_image = tf.image.random_flip_left_right(distorted_image)
+    def distort(reshaped_image, height = 24, weight = 24):
+      # Randomly crop a [height, width] section of the image.
+      distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
 
-  # Because these operations are not commutative, consider randomizing
-  # the order their operation.
-  distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
-  distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-  return distorted_image
+      # Randomly flip the image horizontally.
+      distorted_image = tf.image.random_flip_left_right(distorted_image)
+
+      # Because these operations are not commutative, consider randomizing
+      # the order their operation.
+      distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
+      distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
+      ret_image = tf.image.per_image_whitening(distorted_image)
+      return ret_image 
 
 
 def apply_RGB_subtraction(arr):

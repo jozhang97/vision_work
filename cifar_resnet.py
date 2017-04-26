@@ -13,7 +13,7 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-6
+    learning_rate = 1e-4
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
@@ -37,13 +37,22 @@ with tf.device(device_name):
         return images 
 
     def distort_images(images):
-        # for i in range(images.get_shape()[0]):
-        #     distored_image = distort(images[i])
         return images
+        new_images = []
+        for i in range(images.get_shape()[0]):
+            distorted_image = distort(images[i])
+            new_images.append(distorted_image)
+            new_images.append(crop(image[i]))
+        return np.array(new_images) 
+
+    def crop(image, height = 24, weight = 24):
+        resized_image = tf.random_crop(reshaped_image, [height, width, 3])
+        ret_image = tf.image.per_image_whitening(resized_image)
+        return ret_image
 
     def distort(reshaped_image, height = 24, weight = 24):
       # Randomly crop a [height, width] section of the image.
-      # distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+      distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
 
       # Randomly flip the image horizontally.
       distorted_image = tf.image.random_flip_left_right(distorted_image)
@@ -52,7 +61,8 @@ with tf.device(device_name):
       # the order their operation.
       distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
       distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-      return distorted_image
+      ret_image = tf.image.per_image_whitening(distorted_image)
+      return ret_image 
 
     def add_residual(small, big):
         # make sure same number of channels
@@ -63,7 +73,6 @@ with tf.device(device_name):
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
         #small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
-        return small
         return small + big
 
     ''' DEFINE VARIABLES '''
