@@ -16,8 +16,8 @@ with tf.device(device_name):
     learning_rate = 1e-4
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
-    learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 0.0001
+    learning_rate_decay = 0.01
+    WEIGHT_DECAY_FACTOR = 1e-1
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
@@ -72,8 +72,12 @@ with tf.device(device_name):
         x_diff = big_shape[1] - small_shape[1]
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
+        if chan_diff != 0:
+            big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
         #small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
-        return small + big
+        small_normed = tf.nn.local_response_normalization(small)
+        big_normed = tf.nn.local_response_normalization(big)
+        return small_normed + big_normed
 
     ''' DEFINE VARIABLES '''
     W = {
@@ -83,7 +87,7 @@ with tf.device(device_name):
         "W_02": hvg.weight_variable([3,3,512,512]),
         "W_03": hvg.weight_variable([3,3,512,512]),
         "W_04": hvg.weight_variable([3,3,512,512]), 
-        "W_05": hvg.weight_variable([3,3,256,512]),
+        "W_05": hvg.weight_variable([3,3,3,512]),
 
         "W_06": hvg.weight_variable([3,3,256,256]),
         "W_07": hvg.weight_variable([3,3,256,256]),
@@ -137,6 +141,7 @@ with tf.device(device_name):
     x_reshaped = distort_images(x_reshaped)
     tf.summary.image("image", x_reshaped)
 
+    '''
     y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
     print(y_18.get_shape())
     y_18 = hvg.max_pool_3x3(y_18)
@@ -152,7 +157,7 @@ with tf.device(device_name):
 
 
     y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13'], stride=1), b['b_13']))
-    y_12 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']))
+    y_12 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']), y_14))
 #    y_12 = add_residual(y_12, y_14)
 
     y_11 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_12, W['W_11']), b['b_11']))
@@ -160,15 +165,16 @@ with tf.device(device_name):
 
 
     y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09'], stride=1), b['b_09']))
-    y_08 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']))
+    y_08 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']), y_10))
 #    y_08 = add_residual(y_08, y_10)
 
     y_07 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_08, W['W_07']), b['b_07']))
     y_06 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']), y_08))
+    '''
 
-
+    y_06 = x_reshaped
     y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05'], stride=1), b['b_05']))
-    y_04 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']))
+    y_04 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']), y_06))
 #    y_04 = add_residual(y_04, y_06)
 
     y_03 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_04, W['W_03']), b['b_03']))
@@ -207,6 +213,7 @@ with tf.device(device_name):
     tf.summary.scalar("loss", loss)
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
+    #train_step = tf.train.GradientDescentOptimizer(learning_rate_placeholder).minimize(loss)
     correct_prediction = tf.equal(tf.argmax(y_00, 1), tf.argmax(y_true, 1)) 
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar("accuracy", accuracy)
@@ -221,7 +228,7 @@ with tf.device(device_name):
 
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
-config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=True)
+config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=False)
 sess = tf.Session(config = config)
 train_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/test')

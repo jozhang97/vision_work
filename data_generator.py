@@ -65,16 +65,20 @@ class Cifar:
                 index = random.randint(0, n - 1)
                 while (index in picked):
                     index = random.randint(0, n - 1)
-                im1, im2 = process_image(train_data[index][0])
-                data.append(im1)
-                data.append(im2)
-                labels.append(train_data[index][1])
+                im = train_data[index][0]
+                data.append(im)
                 labels.append(train_data[index][1])
                 picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
 
+'''
+                im1, im2 = process_image(im)
+                data.append(im1)
+                data.append(im2)
+                labels.append(train_data[index][1])
+'''
 def process_image(image):
     im = convert_image_into_2D(image)
     im1 = crop(im)
@@ -88,17 +92,17 @@ def convert_image_into_2D(image):
     return image
 
 def convert_image_into_1D(image):
+    print(image.get_shape())
     image = np.swapaxes(image, 0, 1)
     image = np.swapaxes(image, 0, 2)
-    image = np.reshape(image, [3*32*32])
+    image = np.reshape(image, [3*24*24])
     return image
-
-def crop(image, height = 24, weight = 24):
-    resized_image = tf.random_crop(reshaped_image, [height, width, 3])
-    ret_image = tf.image.per_image_whitening(resized_image)
+def crop(image, height = 24, width = 24):
+    resized_image = tf.random_crop(image, [height, width, 3])
+    ret_image = tf.image.per_image_standardization(resized_image)
     return ret_image
 
-def distort(reshaped_image, height = 24, weight = 24):
+def distort(reshaped_image, height = 24, width= 24):
   # Randomly crop a [height, width] section of the image.
   distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
 
@@ -109,7 +113,7 @@ def distort(reshaped_image, height = 24, weight = 24):
   # the order their operation.
   distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
   distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-  ret_image = tf.image.per_image_whitening(distorted_image)
+  ret_image = tf.image.per_image_standardization(distorted_image)
   return ret_image 
 
 
