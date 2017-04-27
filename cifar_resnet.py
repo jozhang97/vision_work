@@ -72,9 +72,12 @@ with tf.device(device_name):
         x_diff = big_shape[1] - small_shape[1]
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
+        if x_diff != 0 or y_diff != 0:
+            return small
         if chan_diff != 0:
             big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
         #small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
+        return small + big
         small_normed = tf.nn.local_response_normalization(small)
         big_normed = tf.nn.local_response_normalization(big)
         return small_normed + big_normed
@@ -87,7 +90,7 @@ with tf.device(device_name):
         "W_02": hvg.weight_variable([3,3,512,512]),
         "W_03": hvg.weight_variable([3,3,512,512]),
         "W_04": hvg.weight_variable([3,3,512,512]), 
-        "W_05": hvg.weight_variable([3,3,3,512]),
+        "W_05": hvg.weight_variable([3,3,256,512]),
 
         "W_06": hvg.weight_variable([3,3,256,256]),
         "W_07": hvg.weight_variable([3,3,256,256]),
@@ -141,7 +144,6 @@ with tf.device(device_name):
     x_reshaped = distort_images(x_reshaped)
     tf.summary.image("image", x_reshaped)
 
-    '''
     y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
     print(y_18.get_shape())
     y_18 = hvg.max_pool_3x3(y_18)
@@ -170,9 +172,8 @@ with tf.device(device_name):
 
     y_07 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_08, W['W_07']), b['b_07']))
     y_06 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']), y_08))
-    '''
 
-    y_06 = x_reshaped
+    #y_06 = x_reshaped
     y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05'], stride=1), b['b_05']))
     y_04 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']), y_06))
 #    y_04 = add_residual(y_04, y_06)
