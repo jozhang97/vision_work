@@ -5,7 +5,7 @@ import helper_variable_generation as hvg
 from data_generator import Cifar
 
 device_name = "/gpu:0"
-
+# needed 30k iterations to start seeing results
 # 32x32 -> 16x16 -> 8x8 -> 4x4 -> 2x2 -> 1x1 really fast
 
 with tf.device(device_name):
@@ -52,7 +52,9 @@ with tf.device(device_name):
 
     def distort(reshaped_image, height = 24, weight = 24):
       # Randomly crop a [height, width] section of the image.
-      distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+      # distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+      if random.rnadom() > 0.5:
+          return reshaped_image
 
       # Randomly flip the image horizontally.
       distorted_image = tf.image.random_flip_left_right(distorted_image)
@@ -73,11 +75,10 @@ with tf.device(device_name):
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
         if x_diff != 0 or y_diff != 0:
-            return small
+            small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
+            return small + big
         if chan_diff != 0:
             big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
-        #small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
-        return small + big
         small_normed = tf.nn.local_response_normalization(small)
         big_normed = tf.nn.local_response_normalization(big)
         return small_normed + big_normed
