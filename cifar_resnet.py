@@ -17,11 +17,11 @@ with tf.device(device_name):
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.01
-    WEIGHT_DECAY_FACTOR = 1e-1
+    WEIGHT_DECAY_FACTOR = 1e-5
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
-
+    RESTORE_WEIGHTS = True
     batch_size = 128 
     reg_coeff = 0.0005
     dropout_keep_prob = tf.placeholder(tf.float32)
@@ -75,7 +75,11 @@ with tf.device(device_name):
         y_diff = big_shape[2] - small_shape[2]
         chan_diff = -1 * (big_shape[3] - small_shape[3])
         if x_diff != 0 or y_diff != 0:
-            small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
+            small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [0,0]], "CONSTANT")
+            big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
+            print(small_shape)
+            print(big_shape)
+            print(x_diff, y_diff)
             return small + big
         if chan_diff != 0:
             big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
@@ -83,9 +87,16 @@ with tf.device(device_name):
         big_normed = tf.nn.local_response_normalization(big)
         return small_normed + big_normed
 
+    def restore_weights():
+        new_saver = tf.train.import_meta_graph('trained/current_resnet_model.meta')
+        new_saver.restore(sess, tf.train.latest_checkpoint('trained/'))
+        all_vars = tf.get_collection('weights')
+        for v in all_vars:
+            v_ = sess.run(v)
+
     ''' DEFINE VARIABLES '''
     W = {
-        "W_00": hvg.weight_variable([1000, n_classes]),
+        "W_00": hvg.weight_variable([4096, n_classes]),
         "W_01": hvg.weight_variable([1,1]), 
 
         "W_02": hvg.weight_variable([3,3,512,512]),
@@ -113,7 +124,7 @@ with tf.device(device_name):
     add_to_collection_weights(W)
     b = {
         "b_00": hvg.bias_variable([n_classes]),
-        "b_01": hvg.bias_variable([1000]),
+        "b_01": hvg.bias_variable([4096]),
 
         "b_02": hvg.bias_variable([512]),
         "b_03": hvg.bias_variable([512]),
@@ -186,7 +197,7 @@ with tf.device(device_name):
     y_02_pooled = hvg.avg_pool(y_02)
 
     dim = y_02_pooled.get_shape()[1].value
-    W["W_01"] = hvg.weight_variable([dim * dim*512, 1000])
+    W["W_01"] = hvg.weight_variable([dim * dim*512, 4096])
     y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
 
     y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])
@@ -229,12 +240,15 @@ with tf.device(device_name):
 '''
 
 
+saver = tf.train.Saver(max_to_keep=1, keep_checkpoint_every_n_hours=2)
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=False)
 sess = tf.Session(config = config)
 train_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/train', sess.graph)
 test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/test')
 sess.run(tf.global_variables_initializer())
+if RESTORE_WEIGHTS:
+    restore_weights()
 for i in range(60000 * 10):
     if i % 100 == 0:
         offset = random.randint(0, 499)
@@ -245,8 +259,11 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
         train_writer.add_summary(summary, i)
-    if i == 20000 or i == 32000 or i == 48000:
+    if i == 10000 or i == 20000 or i == 32000 or i == 48000:
         learning_rate *= learning_rate_decay
+    if i % 100000 == 0: # i > 0
+        saver.save(sess, 'trained/current_resnet_model')
+
 
 
 
