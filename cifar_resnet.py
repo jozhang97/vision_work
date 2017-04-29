@@ -42,18 +42,18 @@ with tf.device(device_name):
         for i in range(images.get_shape()[0]):
             distorted_image = distort(images[i])
             new_images.append(distorted_image)
-            new_images.append(crop(image[i]))
+            #new_images.append(crop(image[i]))
         return np.array(new_images) 
 
-    def crop(image, height = 24, weight = 24):
+    def crop(image, height = 28, weight = 28):
         resized_image = tf.random_crop(reshaped_image, [height, width, 3])
         ret_image = tf.image.per_image_whitening(resized_image)
         return ret_image
 
-    def distort(reshaped_image, height = 24, weight = 24):
+    def distort(reshaped_image, height = 28, weight = 28):
       # Randomly crop a [height, width] section of the image.
       # distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
-      if random.rnadom() > 0.5:
+      if random.random() > 0.5:
           return reshaped_image
 
       # Randomly flip the image horizontally.
@@ -93,6 +93,7 @@ with tf.device(device_name):
         all_vars = tf.get_collection('weights')
         for v in all_vars:
             v_ = sess.run(v)
+            print(v_)
 
     ''' DEFINE VARIABLES '''
     W = {
