@@ -13,7 +13,7 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-4
+    learning_rate = 1e-1
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.01
@@ -152,7 +152,8 @@ with tf.device(device_name):
     hvg.variable_summaries_map(W)
     hvg.variable_summaries_map(b)
 
-    x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
+    #x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
+    x = tf.placeholder(tf.float32, [None, 28, 28, 3])
     x_reshaped = convert_images_into_2D(x)
     x_reshaped = distort_images(x_reshaped)
     tf.summary.image("image", x_reshaped)
@@ -250,9 +251,9 @@ test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/test')
 sess.run(tf.global_variables_initializer())
 if RESTORE_WEIGHTS:
     restore_weights()
-for i in range(60000 * 10):
+for i in range(100000):
     if i % 100 == 0:
-        offset = random.randint(0, 499)
+        offset = random.randint(0, 49)
         summary, acc = sess.run([merged,accuracy], feed_dict={x: cifar.test_images[offset*16:offset*16+16], y_true: cifar.test_labels[offset*16:offset*16+16], dropout_keep_prob: 1, learning_rate_placeholder: learning_rate})
         test_writer.add_summary(summary, i)
         print(acc)
@@ -260,9 +261,9 @@ for i in range(60000 * 10):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: 0.5, learning_rate_placeholder: learning_rate})
         train_writer.add_summary(summary, i)
-    if i == 10000 or i == 20000 or i == 32000 or i == 48000:
+    if i == 32000 or i == 48000:
         learning_rate *= learning_rate_decay
-    if i % 100000 == 0: # i > 0
+    if i % 50000 == 0 or i > 0:
         saver.save(sess, 'trained/current_resnet_model')
 
 

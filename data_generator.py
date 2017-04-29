@@ -19,15 +19,12 @@ folder = "CIFAR_data/"
 
 device_name = "/gpu:0"
 
-
-
 class Cifar:
-
 # shuffle data and pick 100
 # randomly pick 100
     def __init__(self):
         with tf.device(device_name):
-
+            start = time.time()
             s1 = unpickle(folder+"data_batch_1")
             s2 = unpickle(folder+"data_batch_2")
             s3 = unpickle(folder+"data_batch_3")
@@ -35,7 +32,6 @@ class Cifar:
             s5 = unpickle(folder+"data_batch_5")
             test_image(s1)
             self.s5 = s5
-            start = time.time()
             s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
             s2 = zip(apply_RGB_subtraction(s2['data']), s2['labels'])
             s3 = zip(apply_RGB_subtraction(s3['data']), s3['labels'])
@@ -48,12 +44,18 @@ class Cifar:
             random.shuffle(s1)
             elapsedTime = time.time() - start # t = 0.04
             self.train_data = s1
-
+            test_images = []
             self.test_images = apply_RGB_subtraction(s5['data'])
+            for i in range(len(self.test_images)//10):
+                test_images.append( crop(convert_image_into_2D(self.test_images[i])))
+                #self.test_images[i] = crop(convert_image_into_2D(self.test_images[i]))
+            self.test_images = np.array(test_images)
             self.test_labels = one_hot(s5['labels'])
             #st = unpickle(folder+"test_batch")
             #self.test_images = st['data']/255.0
             #self.test_labels = one_hot(st['labels'])
+            print("DATA SETUP TIME: " + time.time() - start)
+
      
     def train_next_batch(self, batch_size):
         with tf.device(device_name):
@@ -66,24 +68,23 @@ class Cifar:
                 while (index in picked):
                     index = random.randint(0, n - 1)
                 im = train_data[index][0]
-                data.append(im)
+                #data.append(im)
+                im1, im2 = process_image(images)
+                data.append(im1)
+                data.append(im2)
+                labels.append(train_data[index][1])
                 labels.append(train_data[index][1])
                 picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
 
-'''
-                im1, im2 = process_image(im)
-                data.append(im1)
-                data.append(im2)
-                labels.append(train_data[index][1])
-'''
 def process_image(image):
     im = convert_image_into_2D(image)
     im1 = crop(im)
     im2 = distort(im)
-    return convert_image_into_1D(im1), convert_image_into_1D(im2)
+    return im1, im2
+    #return convert_image_into_1D(im1), convert_image_into_1D(im2)
 
 def convert_image_into_2D(image):
     image = np.reshape(image, [3, 32, 32])
@@ -97,18 +98,17 @@ def convert_image_into_1D(image):
     image = np.swapaxes(image, 0, 2)
     image = np.reshape(image, [3*24*24])
     return image
-def crop(image, height = 24, width = 24):
+
+def crop(image, height = 28, width = 28):
     resized_image = tf.random_crop(image, [height, width, 3])
     ret_image = tf.image.per_image_standardization(resized_image)
     return ret_image
 
-def distort(reshaped_image, height = 24, width= 24):
+def distort(reshaped_image, height = 28, width= 28):
   # Randomly crop a [height, width] section of the image.
   distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
-
   # Randomly flip the image horizontally.
   distorted_image = tf.image.random_flip_left_right(distorted_image)
-
   # Because these operations are not commutative, consider randomizing
   # the order their operation.
   distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
@@ -128,14 +128,6 @@ def apply_RGB_subtraction(arr):
             arr_T[i] -= 116
         else:
             arr_T[i] -= 104
-
-    # for j in range(10000):
-    #     for i in range(1024):
-    #         arr[j][i] -= 122
-    #     for i in range(1024, 2048):
-    #         arr[j][i] -= 116
-    #     for i in range(2048, 3072):
-    #         arr[j][i] -= 104
     return arr
 
 def one_hot(lst): 
