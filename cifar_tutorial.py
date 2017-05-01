@@ -13,17 +13,14 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-4
+    learning_rate = 1e-1
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
-    learning_rate_decay = 0.01
-    WEIGHT_DECAY_FACTOR = 1e-1
+    learning_rate_decay = 0.1
+    WEIGHT_DECAY_FACTOR = 0.004
     MOMENTUM = 0.9
-    NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
-    DELAYS_PER_EPOCH = 1
 
     batch_size = 128 
-    reg_coeff = 0.0005
     dropout_keep_prob = tf.placeholder(tf.float32)
 
     ''' HELPER FUNCTIONS '''  
@@ -81,145 +78,113 @@ with tf.device(device_name):
 
     ''' DEFINE VARIABLES '''
     W = {
-        "W_00": hvg.weight_variable([1000, n_classes]),
-        "W_01": hvg.weight_variable([1,1]), 
+        "W_sm": hvg.weight_variable([192, n_classes], stddev=1/192)
+        "W_fc2": hvg.weight_variable([384, 192], stddev=0.04), #weight decay this by 0.004
 
-        "W_02": hvg.weight_variable([3,3,512,512]),
-        "W_03": hvg.weight_variable([3,3,512,512]),
-        "W_04": hvg.weight_variable([3,3,512,512]), 
-        "W_05": hvg.weight_variable([3,3,3,512]),
-
-        "W_06": hvg.weight_variable([3,3,256,256]),
-        "W_07": hvg.weight_variable([3,3,256,256]),
-        "W_08": hvg.weight_variable([3,3,256,256]),
-        "W_09": hvg.weight_variable([3,3,128,256]),
-
-        "W_10": hvg.weight_variable([3,3,128,128]),
-        "W_11": hvg.weight_variable([3,3,128,128]),
-        "W_12": hvg.weight_variable([3,3,128,128]),
-        "W_13": hvg.weight_variable([3,3,64,128]),
-
-        "W_14": hvg.weight_variable([3,3,64,64]),
-        "W_15": hvg.weight_variable([3,3,64,64]),
-        "W_16": hvg.weight_variable([3,3,64,64]),
-        "W_17": hvg.weight_variable([3,3,64,64]),
-
-        "W_18": hvg.weight_variable([7,7,3,64]),
+        "W_conv2": hvg.weight_variable([5,5,64,64], stddev=5e-2),
+        "W_conv1": hvg.weight_variable([5,5,3,64],stddev=5e-2),
         }
     add_to_collection_weights(W)
     b = {
-        "b_00": hvg.bias_variable([n_classes]),
-        "b_01": hvg.bias_variable([1000]),
+        "b_sm": hvg.bias_variable([n_classes], 0),
+        "b_fc2": hvg.bias_variable([192], 0.1),
+        "b_fc1": hvg.bias_variable([384], 0.1),
 
-        "b_02": hvg.bias_variable([512]),
-        "b_03": hvg.bias_variable([512]),
-        "b_04": hvg.bias_variable([512]),
-        "b_05": hvg.bias_variable([512]),
-
-        "b_06": hvg.bias_variable([256]),
-        "b_07": hvg.bias_variable([256]),
-        "b_08": hvg.bias_variable([256]),
-        "b_09": hvg.bias_variable([256]),
-
-        "b_10": hvg.bias_variable([128]),
-        "b_11": hvg.bias_variable([128]),
-        "b_12": hvg.bias_variable([128]),
-        "b_13": hvg.bias_variable([128]),
-
-        "b_14": hvg.bias_variable([64]),
-        "b_15": hvg.bias_variable([64]),
-        "b_16": hvg.bias_variable([64]),
-        "b_17": hvg.bias_variable([64]),
-
-        "b_18": hvg.bias_variable([64]),
+        "b_conv2": hvg.bias_variable([64], 0.1),
+        "b_conv1": hvg.bias_variable([64], 0),
         }
     hvg.variable_summaries_map(W)
     hvg.variable_summaries_map(b)
 
+    # get the picture
     x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
     x_reshaped = convert_images_into_2D(x)
     x_reshaped = distort_images(x_reshaped)
     tf.summary.image("image", x_reshaped)
 
-    '''
-    y_18 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
-    print(y_18.get_shape())
-    y_18 = hvg.max_pool_3x3(y_18)
-    print(y_18.get_shape())
+    # apply first convolutional layer
+    conv1 = hvg.conv2d(x_reshaped, W["W_conv1"], stride=1)
+    bias1 = tf.nn.bias_add(conv1, b["b_conv1"])
+    relu1 = tf.nn.relu(bias1)
 
-    y_17 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_18, W['W_17'], stride=1), b['b_17']))
-    print(y_17.get_shape())
-    y_16 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_17, W['W_16']), b['b_16']), y_18))
+    # apply first pool
+    pool1 = hvg.max_pool_3x3(relu1, stride=2)
 
-    y_15 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_16, W['W_15']), b['b_15']))
-    y_14 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_15, W['W_14']), b['b_14']), y_16))
+    # apply first normalization
+    norm1 = tf.nn.lrn(pool1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75) 
 
+    # apply second convolutional layer
+    conv2 = hvy.conv2d(norm1, W["W_conv2"], stride=1)
+    bias2 = tf.nn.bias_add(conv2, b["b_conv2"])
+    relu2 = tf.nn.relu(bias2)
 
+    # apply second normalization
+    norm2 = tf.nn.lrn(relu2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
 
-    y_13 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_14, W['W_13'], stride=1), b['b_13']))
-    y_12 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_13, W['W_12']), b['b_12']), y_14))
-#    y_12 = add_residual(y_12, y_14)
+    # apply second pool 
+    pool2 = hvy.max_pool_3x3(norm2, stride=2)
 
-    y_11 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_12, W['W_11']), b['b_11']))
-    y_10 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_11, W['W_10']), b['b_10']), y_12))
+    # apply first fc layer
+    dim = pool2.get_shape()[1].value
+    W["W_fc1"] = hvg.weight_variable([dim * dim*64, 384], std = 0.04) # this is decayed by wd = 0.004
+    reshaped = tf.reshape(pool2,[-1, dim*dim*64])
+    fc1 = tf.nn.bias_add(tf.matmul(reshaped, W["W_fc1"]) , b["b_fc1"])
+    relu3 = tf.nn.relu(fc1)
 
+    # apply second fc layer
+    fc2 = tf.nn.bias_add(tf.matmul(relu3, W["W_fc2"]) , b["b_fc2"])
+    relu4 = tf.nn.relu(fc2)
 
-    y_09 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_10, W['W_09'], stride=1), b['b_09']))
-    y_08 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_09, W['W_08']), b['b_08']), y_10))
-#    y_08 = add_residual(y_08, y_10)
+    # apply dropout
+    dropout_ed = tf.nn.dropout(relu4, dropout_keep_prob)
 
-    y_07 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_08, W['W_07']), b['b_07']))
-    y_06 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_07, W['W_06']), b['b_06']), y_08))
-    '''
+    # apply softmax layer 
+    sm = tf.nn.bias_add(tf.matmul(dropout_ed, W["W_sm"]) , b["b_sm"])
+    
+    # predicted label
+    y_00 = sm
 
-    y_06 = x_reshaped
-    y_05 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_06, W['W_05'], stride=1), b['b_05']))
-    y_04 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_05, W['W_04']), b['b_04']), y_06))
-#    y_04 = add_residual(y_04, y_06)
-
-    y_03 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(y_04, W['W_03']), b['b_03']))
-    y_02 = tf.nn.relu(add_residual(tf.nn.bias_add(hvg.conv2d(y_03, W['W_02']), b['b_02']), y_04))
-
-
-    y_02_pooled = hvg.avg_pool(y_02)
-
-    dim = y_02_pooled.get_shape()[1].value
-    W["W_01"] = hvg.weight_variable([dim * dim*512, 1000])
-    y_02_reshaped = tf.reshape(y_02_pooled,[-1, dim*dim*512])
-
-    y_01 = tf.nn.bias_add(tf.matmul(y_02_reshaped, W["W_01"]) , b["b_01"])
-    y_01 = tf.nn.dropout(y_01, dropout_keep_prob)
-    y_00 = tf.nn.bias_add(tf.matmul(y_01, W["W_00"]) , b["b_00"])
-
+    # true label
     y_true = tf.placeholder(tf.float32, [None, n_classes])
 
 
 
     ''' DEFINE LOSS FUNCTION '''
-
+    # Weight decay
+    tf.add_to_collection("weight_decay", W["W_fc1"])
+    tf.add_to_collection("weight_decay", W["W_fc2"])
     with tf.variable_scope('weights_norm') as scope:
         weights_norm = tf.reduce_sum(
           input_tensor = WEIGHT_DECAY_FACTOR*tf.stack(
-              [tf.nn.l2_loss(i) for i in tf.get_collection('weights')]
+              [tf.nn.l2_loss(i) for i in tf.get_collection('weight_decay')]
           ),
           name='weights_norm'
       )
     tf.add_to_collection('losses', weights_norm)
     tf.summary.scalar('weights_norm', weights_norm)
+
+    # Cross Entropy Loss
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_00, labels=y_true))
     tf.summary.scalar("cross_entropy", cross_entropy)
     tf.add_to_collection('losses', cross_entropy)
+
+    # Total Loss
     loss = tf.add_n(tf.get_collection('losses'), name = 'total_loss') 
     tf.summary.scalar("loss", loss)
+
+
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
     #train_step = tf.train.GradientDescentOptimizer(learning_rate_placeholder).minimize(loss)
+
+    ''' CALCULATE PREDICTION ACCURACY ''' 
     correct_prediction = tf.equal(tf.argmax(y_00, 1), tf.argmax(y_true, 1)) 
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar("accuracy", accuracy)
     
-    ''' TRAIN '''
+    ''' TENSORBOARD PREP '''
     merged = tf.summary.merge_all()
+
 '''
     loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
     losses = tf.get_collection('losses')
@@ -230,9 +195,11 @@ with tf.device(device_name):
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
 config = tf.ConfigProto(allow_soft_placement = True, gpu_options=gpu_options, log_device_placement=False)
 sess = tf.Session(config = config)
-train_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/train', sess.graph)
-test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet/test')
+train_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet_tutorial/train', sess.graph)
+test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet_tutorial/test')
 sess.run(tf.global_variables_initializer())
+
+''' TRAIN '''
 for i in range(60000 * 10):
     if i % 100 == 0:
         offset = random.randint(0, 499)

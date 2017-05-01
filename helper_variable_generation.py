@@ -19,14 +19,14 @@ def variable_summaries_map(mapp):
     for name, vals in mapp.items():
         variable_summaries("Weight_" + name, vals)
 
-def weight_variable(shape):
+def weight_variable(shape, stddev=0.1):
   with tf.device(device_name):
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
 
-def bias_variable(shape):
+def bias_variable(shape, constant=0):
   with tf.device(device_name):
-    initial = tf.constant(0.1, shape=shape)
+    initial = tf.constant(constant, shape=shape)
     return tf.Variable(initial)
 
 def conv2d(x, W, stride=1):
