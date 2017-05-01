@@ -30,7 +30,7 @@ class Cifar:
             s3 = unpickle(folder+"data_batch_3")
             s4 = unpickle(folder+"data_batch_4")
             s5 = unpickle(folder+"data_batch_5")
-            test_image(s1)
+            test_image_for_tensorboard(s1)
             self.s5 = s5
             s1 = zip(apply_RGB_subtraction(s1['data']), s1['labels'])
             s2 = zip(apply_RGB_subtraction(s2['data']), s2['labels'])
@@ -44,17 +44,20 @@ class Cifar:
             random.shuffle(s1)
             elapsedTime = time.time() - start # t = 0.04
             self.train_data = s1
-            test_images = []
-            self.test_images = apply_RGB_subtraction(s5['data'])
-            for i in range(len(self.test_images)//10):
-                test_images.append( crop(convert_image_into_2D(self.test_images[i])))
-                #self.test_images[i] = crop(convert_image_into_2D(self.test_images[i]))
-            self.test_images = np.array(test_images)
+            
             self.test_labels = one_hot(s5['labels'])
+            self.test_images = apply_RGB_subtraction(s5['data'])
+            print(self.test_images.shape)
+            #test_images_arr = []
+            #for i in range(len(self.test_images)//10):
+            #    test_images_arr.append(convert_image_into_1D( crop(convert_image_into_2D(self.test_images[i]))))
+
+                #self.test_images[i] = crop(convert_image_into_2D(self.test_images[i]))
+            #self.test_images = test_images_arr
             #st = unpickle(folder+"test_batch")
             #self.test_images = st['data']/255.0
             #self.test_labels = one_hot(st['labels'])
-            print("DATA SETUP TIME: " + time.time() - start)
+            #print("DATA SETUP TIME: ", time.time() - start)
 
      
     def train_next_batch(self, batch_size):
@@ -62,19 +65,20 @@ class Cifar:
             start = time.time()
             train_data = self.train_data
             n = len(train_data)
-            data = []; labels = []; picked = set()
+            data = []; labels = []; 
+            #picked = set()
             for _ in range(batch_size):
                 index = random.randint(0, n - 1)
-                while (index in picked):
-                    index = random.randint(0, n - 1)
+                #while (index in picked):
+                #    index = random.randint(0, n - 1)
                 im = train_data[index][0]
-                #data.append(im)
-                im1, im2 = process_image(images)
-                data.append(im1)
-                data.append(im2)
+                data.append(im)
+                #im1, im2 = process_image(im)
+                #data.append(im1)
+                #data.append(im2)
+                #labels.append(train_data[index][1])
                 labels.append(train_data[index][1])
-                labels.append(train_data[index][1])
-                picked.add(index)
+                #picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
             return np.array(data), one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
@@ -93,10 +97,13 @@ def convert_image_into_2D(image):
     return image
 
 def convert_image_into_1D(image):
+    return image
     print(image.get_shape())
+    shape = image.get_shape()
+    #image = tf.transpose(image, [2, 0, 1])
     image = np.swapaxes(image, 0, 1)
     image = np.swapaxes(image, 0, 2)
-    image = np.reshape(image, [3*24*24])
+    image = np.reshape(image, [shape[0] * shape[1] * shape[2]])
     return image
 
 def crop(image, height = 28, width = 28):
@@ -128,7 +135,7 @@ def apply_RGB_subtraction(arr):
             arr_T[i] -= 116
         else:
             arr_T[i] -= 104
-    return arr
+    return arr / 128
 
 def one_hot(lst): 
     # lst: a list of labels
@@ -137,6 +144,7 @@ def one_hot(lst):
         sub_array = np.zeros([10])
         sub_array[index] += 1
         ret.append(sub_array)
+    return ret
     return np.array(ret)
     
 def unpickle(file):
@@ -145,12 +153,12 @@ def unpickle(file):
         dict = cPickle.load(fo)
     return dict
 
-def test_image(s):
+def test_image_for_tensorboard(s):
     image = s['data'][4:100]
     image_reshaped = np.reshape(image, [-1, 3, 32,32])
     image_reshaped = np.swapaxes(image_reshaped, 1,3)
     image_reshaped = np.swapaxes(image_reshaped, 2,1)
-    tf.summary.image("No Preprocessing", image_reshaped)
+    tf.summary.image("Lack_of_Preprocessing", image_reshaped)
 
 def convert_images_into_2D(images):
     images = tf.reshape(images, [-1, 3, 32, 32])
