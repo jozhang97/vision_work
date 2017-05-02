@@ -43,7 +43,13 @@ def max_pool_3x3(x):
     return tf.nn.max_pool(x, ksize=[1, 3, 3, 1],
                       strides=[1, 2, 2, 1], padding='SAME')
 
-def avg_pool(x):
+def avg_pool_3x3(x, stride=2):
   with tf.device(device_name):
     return tf.nn.avg_pool(x, ksize=[1, 3, 3, 1],
-                      strides=[1, 2, 2, 1], padding='SAME')
+                      strides=[1, stride, stride, 1], padding='SAME')
+
+def avg_pool_2x2(x, stride=2):
+  with tf.device(device_name):
+    return tf.nn.avg_pool(x, ksize=[1, 2, 2, 1],
+                      strides=[1, stride, stride, 1], padding='SAME')
+
