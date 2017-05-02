@@ -24,7 +24,7 @@ def weight_variable(shape, stddev=0.1):
     initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
 
-def bias_variable(shape, constant=0):
+def bias_variable(shape, constant=0.0):
   with tf.device(device_name):
     initial = tf.constant(constant, shape=shape)
     return tf.Variable(initial)
@@ -38,10 +38,10 @@ def max_pool_2x2(x, stride = 2):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1,stride, stride, 1], padding='SAME')
 
-def max_pool_3x3(x):
+def max_pool_3x3(x, stride=2):
   with tf.device(device_name):
     return tf.nn.max_pool(x, ksize=[1, 3, 3, 1],
-                      strides=[1, 2, 2, 1], padding='SAME')
+                      strides=[1, stride, stride, 1], padding='SAME')
 
 def avg_pool_3x3(x, stride=2):
   with tf.device(device_name):

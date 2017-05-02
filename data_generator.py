@@ -135,7 +135,7 @@ def apply_RGB_subtraction(arr):
             arr_T[i] -= 116
         else:
             arr_T[i] -= 104
-    return arr / 128
+    return arr 
 
 def one_hot(lst): 
     # lst: a list of labels
@@ -154,7 +154,7 @@ def unpickle(file):
     return dict
 
 def test_image_for_tensorboard(s):
-    image = s['data'][4:100]
+    image = s['data'][40:100]
     image_reshaped = np.reshape(image, [-1, 3, 32,32])
     image_reshaped = np.swapaxes(image_reshaped, 1,3)
     image_reshaped = np.swapaxes(image_reshaped, 2,1)

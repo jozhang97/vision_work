@@ -13,7 +13,7 @@ with tf.device(device_name):
 
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-1
+    learning_rate = 1e-3
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
@@ -33,52 +33,9 @@ with tf.device(device_name):
         images = tf.transpose(images, [0, 2, 3, 1])
         return images 
 
-    def distort_images(images):
-        return images
-        new_images = []
-        for i in range(images.get_shape()[0]):
-            distorted_image = distort(images[i])
-            new_images.append(distorted_image)
-            new_images.append(crop(image[i]))
-        return np.array(new_images) 
-
-    def crop(image, height = 24, weight = 24):
-        resized_image = tf.random_crop(reshaped_image, [height, width, 3])
-        ret_image = tf.image.per_image_whitening(resized_image)
-        return ret_image
-
-    def distort(reshaped_image, height = 24, weight = 24):
-      # Randomly crop a [height, width] section of the image.
-      distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
-
-      # Randomly flip the image horizontally.
-      distorted_image = tf.image.random_flip_left_right(distorted_image)
-
-      # Because these operations are not commutative, consider randomizing
-      # the order their operation.
-      distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
-      distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-      ret_image = tf.image.per_image_whitening(distorted_image)
-      return ret_image 
-
-    def add_residual(small, big):
-        # make sure same number of channels
-        small_shape = small.get_shape().as_list()
-        big_shape = big.get_shape().as_list()
-        # assert small_shape[3] == big_shape[3]
-        x_diff = big_shape[1] - small_shape[1]
-        y_diff = big_shape[2] - small_shape[2]
-        chan_diff = -1 * (big_shape[3] - small_shape[3])
-        if chan_diff != 0:
-            big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
-        #small = tf.pad(small, [[0, 0], [x_diff // 2, x_diff // 2 + x_diff%2], [y_diff // 2, y_diff // 2 + y_diff %2], [chan_diff // 2, chan_diff // 2]], "CONSTANT")
-        small_normed = tf.nn.local_response_normalization(small)
-        big_normed = tf.nn.local_response_normalization(big)
-        return small_normed + big_normed
-
     ''' DEFINE VARIABLES '''
     W = {
-        "W_sm": hvg.weight_variable([192, n_classes], stddev=1/192)
+        "W_sm": hvg.weight_variable([192, n_classes], stddev=1/192),
         "W_fc2": hvg.weight_variable([384, 192], stddev=0.04), #weight decay this by 0.004
 
         "W_conv2": hvg.weight_variable([5,5,64,64], stddev=5e-2),
@@ -86,12 +43,12 @@ with tf.device(device_name):
         }
     add_to_collection_weights(W)
     b = {
-        "b_sm": hvg.bias_variable([n_classes], 0),
+        "b_sm": hvg.bias_variable([n_classes], 0.0),
         "b_fc2": hvg.bias_variable([192], 0.1),
         "b_fc1": hvg.bias_variable([384], 0.1),
 
         "b_conv2": hvg.bias_variable([64], 0.1),
-        "b_conv1": hvg.bias_variable([64], 0),
+        "b_conv1": hvg.bias_variable([64], 0.0),
         }
     hvg.variable_summaries_map(W)
     hvg.variable_summaries_map(b)
@@ -99,7 +56,6 @@ with tf.device(device_name):
     # get the picture
     x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
     x_reshaped = convert_images_into_2D(x)
-    x_reshaped = distort_images(x_reshaped)
     tf.summary.image("image", x_reshaped)
 
     # apply first convolutional layer
@@ -114,7 +70,7 @@ with tf.device(device_name):
     norm1 = tf.nn.lrn(pool1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75) 
 
     # apply second convolutional layer
-    conv2 = hvy.conv2d(norm1, W["W_conv2"], stride=1)
+    conv2 = hvg.conv2d(norm1, W["W_conv2"], stride=1)
     bias2 = tf.nn.bias_add(conv2, b["b_conv2"])
     relu2 = tf.nn.relu(bias2)
 
@@ -122,11 +78,11 @@ with tf.device(device_name):
     norm2 = tf.nn.lrn(relu2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
 
     # apply second pool 
-    pool2 = hvy.max_pool_3x3(norm2, stride=2)
+    pool2 = hvg.max_pool_3x3(norm2, stride=2)
 
     # apply first fc layer
     dim = pool2.get_shape()[1].value
-    W["W_fc1"] = hvg.weight_variable([dim * dim*64, 384], std = 0.04) # this is decayed by wd = 0.004
+    W["W_fc1"] = hvg.weight_variable([dim * dim*64, 384], stddev = 0.04) # this is decayed by wd = 0.004
     reshaped = tf.reshape(pool2,[-1, dim*dim*64])
     fc1 = tf.nn.bias_add(tf.matmul(reshaped, W["W_fc1"]) , b["b_fc1"])
     relu3 = tf.nn.relu(fc1)
@@ -174,8 +130,8 @@ with tf.device(device_name):
 
 
     ''' DEFINE OPTIMIZATION TECHNIQUE '''
-    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
-    #train_step = tf.train.GradientDescentOptimizer(learning_rate_placeholder).minimize(loss)
+    #train_step = tf.train.AdamOptimizer(learning_rate=learning_rate_placeholder).minimize(loss)
+    train_step = tf.train.GradientDescentOptimizer(learning_rate_placeholder).minimize(loss)
 
     ''' CALCULATE PREDICTION ACCURACY ''' 
     correct_prediction = tf.equal(tf.argmax(y_00, 1), tf.argmax(y_true, 1)) 
