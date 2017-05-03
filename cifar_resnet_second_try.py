@@ -11,14 +11,14 @@ device_name = "/gpu:0"
 with tf.device(device_name):
     cifar = Cifar()
 
-    n = 2
+    n = 4
     ''' HYPERPARAMETERS '''
     n_classes = 10
     learning_rate = 1e-3
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 1e-2
+    WEIGHT_DECAY_FACTOR = 1e-5
     WEIGHT_DECAY_FACTOR_placeholder = tf.placeholder(tf.float32)
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
@@ -105,12 +105,12 @@ with tf.device(device_name):
         else:
             stride1=1
             out_channels = in_channels
-        stride2=1
+        stride2=2
 
         # initialize weights
-        W_1 = hvg.weight_variable([3,3,in_channels,out_channels], stddev=0.02)
+        W_1 = hvg.weight_variable([3,3,in_channels,out_channels], stddev=0.2)
         b_1 = hvg.bias_variable([out_channels], constant=0.1)
-        W_2 = hvg.weight_variable([3,3,out_channels,out_channels], stddev= 0.02)
+        W_2 = hvg.weight_variable([3,3,out_channels,out_channels], stddev= 0.2)
         b_2 = hvg.bias_variable([out_channels], constant=0.1)
 
         # first conv layer
@@ -139,7 +139,9 @@ with tf.device(device_name):
     tf.summary.image("image", x_reshaped)
 
     # first conv layer
-    conv1 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W['W_18']), b['b_18']))
+    W_first = hvg.weight_variable([7,7,3,64], stddev=1.0)
+    b_first = hvg.bias_variable([64])
+    conv1 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first), b_first))
 
     # max pool layer
     res = hvg.max_pool_3x3(conv1)
@@ -167,17 +169,17 @@ with tf.device(device_name):
 
     # apply average pool
     avg_pool1 = hvg.avg_pool_3x3(relu)
-    avg_pool1 = tf.nn.dropout(avg_pool1, dropout_keep_prob)
+    #avg_pool1 = tf.nn.dropout(avg_pool1, dropout_keep_prob)
 
 
     # calc size of feature vector and reshape
     dim = avg_pool1.get_shape()[1].value
-    num_channels = avg_pool1.get_shape().as_list()[3].value
+    num_channels = avg_pool1.get_shape().as_list()[3]
     print("Size after convolution", dim, num_channels)
     reshaped = tf.reshape(avg_pool1,[-1, dim*dim*num_channels])
     
     # set up fc weights
-    W_fc = hvg.weight_variable([dim * dim * num_channels, 10])
+    W_fc = hvg.weight_variable([dim * dim * num_channels, 10], stddev=1.0)
     b_fc = hvg.bias_variable([10], constant=0.1)
     tf.add_to_collection("weight_decay", W_fc)
 
