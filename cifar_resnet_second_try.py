@@ -38,35 +38,18 @@ with tf.device(device_name):
         images = tf.transpose(images, [0, 2, 3, 1])
         return images 
 
-    def distort_images(images, num_images):
-        new_images = []
-        for i in range(16):
-            new_images.append(distort(images[i]))
-        return np.array(new_images)
+    def prep_data_augment(image, height=24, width=24):
+        image = tf.random_crop(image, [height, width, 3])
+        image = tf.image.random_flip_left_right(image)
+        image = tf.image.random_brightness(image, max_delta=63)
+        image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+        image = tf.image.per_image_whitening(image)
+        return image
 
-    def crop(image, height = 28, weight = 28):
-        resized_image = tf.random_crop(reshaped_image, [height, width, 3])
-        #ret_image = tf.image.per_image_whitening(resized_image)
-        ret_image = resized_image
-        return ret_image
+    def data_augment(input_tensor):
+        output_tensor = tf.map_fn(prep_data_augment, input_tensor)
+        return output_tensor
 
-    def distort(reshaped_image, height = 28, weight = 28):
-      # Randomly crop a [height, width] section of the image.
-      distorted_image = reshaped_image
-      # distorted_image = tf.random_crop(_image, [height, width, 3])
-      if random.random() > 0.5:
-          return reshaped_image
-
-      # Randomly flip the image horizontally.
-      distorted_image = tf.image.random_flip_left_right(distorted_image)
-
-      # Because these operations are not commutative, consider randomizing
-      # the order their operation.
-      distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
-      distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
-      #ret_image = tf.image.per_image_whitening(distorted_image)
-      ret_image = distorted_image
-      return ret_image 
 
     def add_residual(small, big):
         # make sure same number of channels
@@ -135,6 +118,7 @@ with tf.device(device_name):
     num_images = tf.placeholder(tf.float32)
     x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
     x_reshaped = convert_images_into_2D(x)
+    x_reshaped = data_augment(x_reshaped)
     x_reshaped = tf.pad(x_reshaped, [[0,0], [3,3], [3,3], [0,0]], "CONSTANT")
     tf.summary.image("image", x_reshaped)
 
