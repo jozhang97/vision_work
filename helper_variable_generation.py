@@ -1,4 +1,5 @@
 import tensorflow as tf
+import math
 device_name = "/gpu:0"
 
 def variable_summaries(name, var):
@@ -21,11 +22,15 @@ def variable_summaries_map(mapp):
 
 def weight_variable(shape, stddev=0.1):
   with tf.device(device_name):
+    k_1, k_2, in_chan, out_chan = shape
+    n_l = k_2 * k_1 * in_chan
+    stddev = math.sqrt(2/n_l)
     initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
 
 def bias_variable(shape, constant=0.0):
   with tf.device(device_name):
+    constant = 0.0 # per "delving Deep into rectifers"
     initial = tf.constant(constant, shape=shape)
     return tf.Variable(initial)
 

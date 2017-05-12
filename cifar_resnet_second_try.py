@@ -29,6 +29,7 @@ with tf.device(device_name):
     dropout_keep_prob = tf.placeholder(tf.float32)
 
     ''' HELPER FUNCTIONS '''  
+
     def add_to_collection_weights(W):   
         for val in W.values():
             tf.add_to_collection("weights", val)
@@ -65,8 +66,8 @@ with tf.device(device_name):
             return small + big
         if chan_diff != 0:
             big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
-        small_normed = tf.nn.local_response_normalization(small)
-        big_normed = tf.nn.local_response_normalization(big)
+        # small_normed = tf.nn.local_response_normalization(small)
+        # big_normed = tf.nn.local_response_normalization(big)
         return small_normed + big_normed
 
     def restore_weights():
@@ -112,19 +113,24 @@ with tf.device(device_name):
         # first conv layer
         conv1 = hvg.conv2d(input, W_1, stride=stride1)
         bias1 = tf.nn.bias_add(conv1, b_1)
-        relu1 = tf.nn.relu(bias1)
+        norm1 = tf.nn.local_response_normalization(bias1)
+        relu1 = tf.nn.relu(norm1)
 
         # second conv layer
         conv2 = hvg.conv2d(relu1, W_2, stride=stride2)
         bias2 = tf.nn.bias_add(conv2, b_2)
+        norm2 = tf.nn.local_response_normalization(bias2)
+
 
         # apply average pool if incrasing dimensions
         if inc_dim:
-            bias2 = hvg.avg_pool_3x3(bias2, stride=2)
+            norm2 = hvg.avg_pool_3x3(norm2, stride=2)
 
         # add residual
-        ret = add_residual(bias2, input)
-        return ret
+        ret = add_residual(norm2, input)
+
+        # apply relu
+        return tf.nn.relu(ret)
 
 
 
@@ -167,8 +173,6 @@ with tf.device(device_name):
     # fourth residual layer
     for i in range(n-1):
         res = residual(res)  
-    # apply relu
-    relu = tf.nn.relu(res)
 
     # apply average pool
     avg_pool1 = hvg.avg_pool_3x3(relu)
@@ -245,7 +249,7 @@ for i in range(int(60e4)):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: dropout_keep, learning_rate_placeholder: learning_rate, num_images: batch_size, WEIGHT_DECAY_FACTOR_placeholder: WEIGHT_DECAY_FACTOR})
         train_writer.add_summary(summary, i)
-    if  i == 32000 or i == 48000:
+    if  i == 32000 or i == 48000 or i == 96000:
         learning_rate *= learning_rate_decay
         print("Dropping learning rate")
     if i % 50000 == 0 and i > 0:
