@@ -60,8 +60,13 @@ def avg_pool_2x2(x, stride=2):
     return tf.nn.avg_pool(x, ksize=[1, 2, 2, 1],
                       strides=[1, stride, stride, 1], padding='SAME')
 
+
 def normalize(vect):
+  offset = tf.Variable(tf.constant(0.0, shape=[n_out]),
+                                     name='beta', trainable=True)
+  scale = tf.Variable(tf.constant(1.0, shape=[n_out]),    
+                                name='gamma', trainable=True)
   batch_mean, batch_var = tf.nn.moments(vect ,axes=[0, 1, 2])
-  norm = tf.nn.batch_normalization(vect, batch_mean, batch_var)
+  norm = tf.nn.batch_normalization(vect, batch_mean, batch_var, offset, scale, 1e-3)
   return norm
 
