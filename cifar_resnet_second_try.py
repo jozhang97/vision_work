@@ -113,13 +113,13 @@ with tf.device(device_name):
         # first conv layer
         conv1 = hvg.conv2d(input, W_1, stride=stride1)
         bias1 = tf.nn.bias_add(conv1, b_1)
-        norm1 = tf.nn.local_response_normalization(bias1)
+        norm1 = hvg.normalize(bias1)
         relu1 = tf.nn.relu(norm1)
 
         # second conv layer
         conv2 = hvg.conv2d(relu1, W_2, stride=stride2)
         bias2 = tf.nn.bias_add(conv2, b_2)
-        norm2 = tf.nn.local_response_normalization(bias2)
+        norm2 = hvg.normalize(bias2)
 
 
         # apply average pool if incrasing dimensions
@@ -144,10 +144,12 @@ with tf.device(device_name):
     # first conv layer
     W_first = hvg.weight_variable([7,7,3,64], stddev=1.0)
     b_first = hvg.bias_variable([64])
-    conv1 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first, stride=2), b_first))
-
+    conv1 = tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first, stride=2), b_first)
+    norm1 = hvg.normalize(conv1)
+    relu1 = tf.nn.relu(norm1)
+    
     # max pool layer
-    res = hvg.max_pool_3x3(conv1, stride=2)
+    res = hvg.max_pool_3x3(relu1, stride=2)
 
     # first residual layers
     for i in range(n):
