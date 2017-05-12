@@ -22,9 +22,11 @@ def variable_summaries_map(mapp):
 
 def weight_variable(shape, stddev=0.1):
   with tf.device(device_name):
-    k_1, k_2, in_chan, out_chan = shape
-    n_l = k_2 * k_1 * in_chan
-    stddev = math.sqrt(2/n_l)
+    # If convolutional layer, make the stddev follow this
+    if len(shape) == 4: 
+        k_1, k_2, in_chan, out_chan = shape
+        n_l = k_2 * k_1 * in_chan
+        stddev = math.sqrt(2/n_l)
     initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
 
