@@ -14,11 +14,11 @@ with tf.device(device_name):
     n = 2
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-5
+    learning_rate = 1e-1
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 1e-3
+    WEIGHT_DECAY_FACTOR = 1e-4
     WEIGHT_DECAY_FACTOR_placeholder = tf.placeholder(tf.float32)
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
