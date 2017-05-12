@@ -47,6 +47,7 @@ class Cifar:
             
             self.test_labels = one_hot(s5['labels']) 
             self.test_images = apply_RGB_subtraction(s5['data']) / 128
+            test_image_for_tensorboard_2(self.test_images)
             print(self.test_images.shape)
             #test_images_arr = []
             #for i in range(len(self.test_images)//10):
@@ -159,6 +160,13 @@ def test_image_for_tensorboard(s):
     image_reshaped = np.swapaxes(image_reshaped, 1,3)
     image_reshaped = np.swapaxes(image_reshaped, 2,1)
     tf.summary.image("Lack_of_Preprocessing", image_reshaped)
+
+def test_image_for_tensorboard_2(s):
+    image = s['data'][40:100]
+    image_reshaped = np.reshape(image, [-1, 3, 32,32])
+    image_reshaped = np.swapaxes(image_reshaped, 1,3)
+    image_reshaped = np.swapaxes(image_reshaped, 2,1)
+    tf.summary.image("Some_of_Preprocessing", image_reshaped)
 
 def convert_images_into_2D(images):
     images = tf.reshape(images, [-1, 3, 32, 32])
