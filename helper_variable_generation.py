@@ -62,6 +62,7 @@ def avg_pool_2x2(x, stride=2):
 
 
 def normalize(vect):
+  n_out = vect.get_shape().as_list()[3]
   offset = tf.Variable(tf.constant(0.0, shape=[n_out]),
                                      name='beta', trainable=True)
   scale = tf.Variable(tf.constant(1.0, shape=[n_out]),    
