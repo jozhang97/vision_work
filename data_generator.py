@@ -45,8 +45,8 @@ class Cifar:
             elapsedTime = time.time() - start # t = 0.04
             self.train_data = s1
             
-            self.test_labels = one_hot(s5['labels'])
-            self.test_images = apply_RGB_subtraction(s5['data'])
+            self.test_labels = one_hot(s5['labels']) 
+            self.test_images = apply_RGB_subtraction(s5['data']) / 128
             print(self.test_images.shape)
             #test_images_arr = []
             #for i in range(len(self.test_images)//10):
@@ -80,7 +80,7 @@ class Cifar:
                 labels.append(train_data[index][1])
                 #picked.add(index)
             elapsedTime = time.time() - start # t = 0.0004
-            return np.array(data), one_hot(labels) 
+            return np.array(data) / 128, one_hot(labels) 
             #return self.s[index]['data']/255.0, one_hot(self.s[index]['labels'])
 
 def process_image(image):
