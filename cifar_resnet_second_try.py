@@ -11,20 +11,20 @@ device_name = "/gpu:0"
 with tf.device(device_name):
     cifar = Cifar()
 
-    n = 4
+    n = 2
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-3
+    learning_rate = 1e-5
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 1e-5
+    WEIGHT_DECAY_FACTOR = 1e-3
     WEIGHT_DECAY_FACTOR_placeholder = tf.placeholder(tf.float32)
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
-    RESTORE_WEIGHTS = False
-    batch_size = 128 
+    RESTORE_WEIGHTS = True 
+    batch_size = 256 
     dropout_keep = 0.5
     dropout_keep_prob = tf.placeholder(tf.float32)
 
@@ -41,9 +41,9 @@ with tf.device(device_name):
     def prep_data_augment(image, height=24, width=24):
         image = tf.random_crop(image, [height, width, 3])
         image = tf.image.random_flip_left_right(image)
-        image = tf.image.random_brightness(image, max_delta=63)
+        image = tf.image.random_brightness(image, max_delta=63/256)
         image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
-        image = tf.image.per_image_whitening(image)
+        image = tf.image.per_image_standardization(image)
         return image
 
     def data_augment(input_tensor):
@@ -76,7 +76,9 @@ with tf.device(device_name):
         for v in all_vars:
             v_ = sess.run(v)
 
+    variable_summary_index = 0
     def residual(input, inc_dim = False):
+        global variable_summary_index
         # get shape of input
         shape = input.get_shape().as_list()
         in_channels = shape[3]
@@ -87,6 +89,7 @@ with tf.device(device_name):
             out_channels = 2 * in_channels
         else:
             stride1=1
+            stride1=2
             out_channels = in_channels
         stride2=2
 
@@ -95,6 +98,16 @@ with tf.device(device_name):
         b_1 = hvg.bias_variable([out_channels], constant=0.1)
         W_2 = hvg.weight_variable([3,3,out_channels,out_channels], stddev= 0.2)
         b_2 = hvg.bias_variable([out_channels], constant=0.1)
+
+        # Record some weights
+        print("Conv shape: " + str(W_1.get_shape()))
+        print("Conv shape: " + str(W_2.get_shape()))
+        
+        hvg.variable_summaries("W"+str(variable_summary_index), W_1)
+        hvg.variable_summaries("b"+str(variable_summary_index), b_1)
+        hvg.variable_summaries("W"+str(variable_summary_index+1), W_2)
+        hvg.variable_summaries("b"+str(variable_summary_index+1), b_2)
+        variable_summary_index += 2
 
         # first conv layer
         conv1 = hvg.conv2d(input, W_1, stride=stride1)
@@ -119,35 +132,41 @@ with tf.device(device_name):
     x = tf.placeholder(tf.float32, [None, 32 * 32 * 3])
     x_reshaped = convert_images_into_2D(x)
     x_reshaped = data_augment(x_reshaped)
-    x_reshaped = tf.pad(x_reshaped, [[0,0], [3,3], [3,3], [0,0]], "CONSTANT")
+    x_reshaped = tf.pad(x_reshaped, [[0,0], [4,4], [4,4], [0,0]], "CONSTANT")
     tf.summary.image("image", x_reshaped)
 
     # first conv layer
     W_first = hvg.weight_variable([7,7,3,64], stddev=1.0)
     b_first = hvg.bias_variable([64])
-    conv1 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first), b_first))
+    conv1 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first, stride=2), b_first))
 
     # max pool layer
-    res = hvg.max_pool_3x3(conv1)
+    res = hvg.max_pool_3x3(conv1, stride=2)
 
     # first residual layers
-    for i in range(n):
-        res = residual(res)
-
-    # first increasing residual layer
-    res = residual(res, inc_dim=True)
-
-    # second residual layer
     for i in range(n):
         res = residual(res)
 
     # second increasing residual layer
     res = residual(res, inc_dim=True)
 
+    # second residual layer
+    for i in range(n-1):
+        res = residual(res)
+
+    # third increasing residual layer
+    res = residual(res, inc_dim=True)
+
     # third residual layer
-    for i in range(n):
+    for i in range(n-1):
         res = residual(res)  
 
+    # fourth increasing residual layer
+    res = residual(res, inc_dim=True)
+
+    # fourth residual layer
+    for i in range(n-1):
+        res = residual(res)  
     # apply relu
     relu = tf.nn.relu(res)
 
@@ -216,7 +235,7 @@ test_writer = tf.summary.FileWriter('tensorboard_log_cifar_resnet_second_try/tes
 sess.run(tf.global_variables_initializer())
 if RESTORE_WEIGHTS:
     restore_weights()
-for i in range(100000):
+for i in range(int(60e4)):
     if i % 100 == 0 and i > 100:
         offset = random.randint(0, 49)
         summary, acc = sess.run([merged,accuracy], feed_dict={x: cifar.test_images[offset*16:offset*16+16], y_true: cifar.test_labels[offset*16:offset*16+16], dropout_keep_prob: 1, learning_rate_placeholder: learning_rate, num_images: 16, WEIGHT_DECAY_FACTOR_placeholder: WEIGHT_DECAY_FACTOR})
@@ -226,7 +245,7 @@ for i in range(100000):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: dropout_keep, learning_rate_placeholder: learning_rate, num_images: batch_size, WEIGHT_DECAY_FACTOR_placeholder: WEIGHT_DECAY_FACTOR})
         train_writer.add_summary(summary, i)
-    if i == 15000 or i == 32000 or i == 48000:
+    if  i == 32000 or i == 48000:
         learning_rate *= learning_rate_decay
         print("Dropping learning rate")
     if i % 50000 == 0 and i > 0:
