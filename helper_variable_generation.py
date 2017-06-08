@@ -1,5 +1,4 @@
 import tensorflow as tf
-import math
 device_name = "/gpu:0"
 
 def variable_summaries(name, var):
@@ -22,17 +21,11 @@ def variable_summaries_map(mapp):
 
 def weight_variable(shape, stddev=0.1):
   with tf.device(device_name):
-    # If convolutional layer, make the stddev follow this
-    if len(shape) == 4: 
-        k_1, k_2, in_chan, out_chan = shape
-        n_l = k_2 * k_1 * in_chan
-        stddev = math.sqrt(2/n_l)
     initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial)
 
 def bias_variable(shape, constant=0.0):
   with tf.device(device_name):
-    constant = 0.0 # per "delving Deep into rectifers"
     initial = tf.constant(constant, shape=shape)
     return tf.Variable(initial)
 
@@ -59,15 +52,4 @@ def avg_pool_2x2(x, stride=2):
   with tf.device(device_name):
     return tf.nn.avg_pool(x, ksize=[1, 2, 2, 1],
                       strides=[1, stride, stride, 1], padding='SAME')
-
-
-def normalize(vect):
-  n_out = vect.get_shape().as_list()[3]
-  offset = tf.Variable(tf.constant(0.0, shape=[n_out]),
-                                     name='beta', trainable=True)
-  scale = tf.Variable(tf.constant(1.0, shape=[n_out]),    
-                                name='gamma', trainable=True)
-  batch_mean, batch_var = tf.nn.moments(vect ,axes=[0, 1, 2])
-  norm = tf.nn.batch_normalization(vect, batch_mean, batch_var, offset, scale, 1e-3)
-  return norm
 

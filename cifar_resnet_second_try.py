@@ -14,22 +14,21 @@ with tf.device(device_name):
     n = 2
     ''' HYPERPARAMETERS '''
     n_classes = 10
-    learning_rate = 1e-1
+    learning_rate = 1e-5
     learning_rate_placeholder = tf.placeholder(tf.float32)
     tf.summary.scalar('learning_rate', learning_rate_placeholder)
     learning_rate_decay = 0.1
-    WEIGHT_DECAY_FACTOR = 1e-4
+    WEIGHT_DECAY_FACTOR = 1e-3
     WEIGHT_DECAY_FACTOR_placeholder = tf.placeholder(tf.float32)
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
-    RESTORE_WEIGHTS = False 
+    RESTORE_WEIGHTS = True 
     batch_size = 256 
     dropout_keep = 0.5
     dropout_keep_prob = tf.placeholder(tf.float32)
 
     ''' HELPER FUNCTIONS '''  
-
     def add_to_collection_weights(W):   
         for val in W.values():
             tf.add_to_collection("weights", val)
@@ -66,8 +65,8 @@ with tf.device(device_name):
             return small + big
         if chan_diff != 0:
             big = tf.pad(big, [[0, 0], [0, 0], [0, 0], [chan_diff//2 , chan_diff//2 + chan_diff%2]])
-        # small_normed = tf.nn.local_response_normalization(small)
-        # big_normed = tf.nn.local_response_normalization(big)
+        small_normed = tf.nn.local_response_normalization(small)
+        big_normed = tf.nn.local_response_normalization(big)
         return small_normed + big_normed
 
     def restore_weights():
@@ -113,24 +112,19 @@ with tf.device(device_name):
         # first conv layer
         conv1 = hvg.conv2d(input, W_1, stride=stride1)
         bias1 = tf.nn.bias_add(conv1, b_1)
-        norm1 = hvg.normalize(bias1)
-        relu1 = tf.nn.relu(norm1)
+        relu1 = tf.nn.relu(bias1)
 
         # second conv layer
         conv2 = hvg.conv2d(relu1, W_2, stride=stride2)
         bias2 = tf.nn.bias_add(conv2, b_2)
-        norm2 = hvg.normalize(bias2)
-
 
         # apply average pool if incrasing dimensions
         if inc_dim:
-            norm2 = hvg.avg_pool_3x3(norm2, stride=2)
+            bias2 = hvg.avg_pool_3x3(bias2, stride=2)
 
         # add residual
-        ret = add_residual(norm2, input)
-
-        # apply relu
-        return tf.nn.relu(ret)
+        ret = add_residual(bias2, input)
+        return ret
 
 
 
@@ -144,12 +138,10 @@ with tf.device(device_name):
     # first conv layer
     W_first = hvg.weight_variable([7,7,3,64], stddev=1.0)
     b_first = hvg.bias_variable([64])
-    conv1 = tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first, stride=2), b_first)
-    norm1 = hvg.normalize(conv1)
-    relu1 = tf.nn.relu(norm1)
-    
+    conv1 = tf.nn.relu(tf.nn.bias_add(hvg.conv2d(x_reshaped, W_first, stride=2), b_first))
+
     # max pool layer
-    res = hvg.max_pool_3x3(relu1, stride=2)
+    res = hvg.max_pool_3x3(conv1, stride=2)
 
     # first residual layers
     for i in range(n):
@@ -175,9 +167,11 @@ with tf.device(device_name):
     # fourth residual layer
     for i in range(n-1):
         res = residual(res)  
+    # apply relu
+    relu = tf.nn.relu(res)
 
     # apply average pool
-    avg_pool1 = hvg.avg_pool_3x3(res)
+    avg_pool1 = hvg.avg_pool_3x3(relu)
     #avg_pool1 = tf.nn.dropout(avg_pool1, dropout_keep_prob)
 
 
@@ -251,7 +245,7 @@ for i in range(int(60e4)):
         batch_xs, batch_ys = cifar.train_next_batch(batch_size)
         summary, _ = sess.run([merged, train_step], feed_dict={x: batch_xs, y_true:batch_ys, dropout_keep_prob: dropout_keep, learning_rate_placeholder: learning_rate, num_images: batch_size, WEIGHT_DECAY_FACTOR_placeholder: WEIGHT_DECAY_FACTOR})
         train_writer.add_summary(summary, i)
-    if  i == 32000 or i == 48000 or i == 96000:
+    if  i == 32000 or i == 48000:
         learning_rate *= learning_rate_decay
         print("Dropping learning rate")
     if i % 50000 == 0 and i > 0:
