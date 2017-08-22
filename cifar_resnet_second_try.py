@@ -23,7 +23,7 @@ with tf.device(device_name):
     MOMENTUM = 0.9
     NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 60000
     DELAYS_PER_EPOCH = 1
-    RESTORE_WEIGHTS = True 
+    RESTORE_WEIGHTS = False
     batch_size = 256 
     dropout_keep = 0.5
     dropout_keep_prob = tf.placeholder(tf.float32)
